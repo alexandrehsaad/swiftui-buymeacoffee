@@ -88,11 +88,11 @@ The Swift Package Manager is a tool for managing the distribution of Swift code 
 
         var body: some View {
             BuyMeACoffeeButton(username: "myusername")
-	        .buttonStyle(BuyMeACoffeeButtonStyle(tint: backgroundColor))
-	        .cornerRadius(10)
-	        .overlay(RoundedRectangle(cornerRadius: 10)
-	            .strokeBorder(strokeColor, lineWidth: 1)
-	        )
+                .buttonStyle(BuyMeACoffeeButtonStyle(tint: backgroundColor))
+                .cornerRadius(10)
+                .overlay(RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(strokeColor, lineWidth: 1)
+                )
         }
     }
     ```
