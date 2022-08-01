@@ -18,7 +18,7 @@ let package = Package(
 	],
 	targets: [
 		.target(name: "BuyMeACoffee", dependencies: [], path: "Sources", resources: [
-			.process("Resources")
+			.process("BuyMeACoffee/Resources")
 		])
 	],
 	swiftLanguageVersions: [.v5]

@@ -10,13 +10,6 @@ import SwiftUI
 ///
 public struct BuyMeACoffeeButtonStyle {
 	///
-	@Environment(\.colorScheme)
-	internal var colorScheme: ColorScheme
-	
-//	///
-//	internal let tint: BuyMeACoffeeController = .init()
-	
-	///
 	internal let font: BuyMeACoffeeFont
 
 	///
