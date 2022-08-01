@@ -4,13 +4,14 @@ A package containing a Buy Me a Coffee button for Apple's SwiftUI framework.
 
 ## Overview
 
-![](Screenshots/LightModeButtons.png) ![](Screenshots/DarkModeButtons.png)
+Light Mode | Dark Mode
+:---:|:---:
+![alt](Screenshots/LightModeButtons.png) | ![alt](Screenshots/DarkModeButtons.png)
 
 ## Availability
 
 - iOS 15.0+
 - iPadOS 15.0+
-- macCatalyst 15.0+
 
 ## Installation
 
