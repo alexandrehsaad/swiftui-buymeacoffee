@@ -71,28 +71,28 @@ The Swift Package Manager is a tool for managing the distribution of Swift code 
     
 ## Examples
 
-An example of a button that adapts to the color scheme.
+- An example of a button that adapts to the color scheme.
 
     ```swift
     struct ContentView: View {
         @Environment(\.colorScheme)
         var colorScheme
-		
+
         var backgroundColor: BuyMeACoffeeColor {
             colorScheme == .dark ? .black : .white
         }
-		
+
         var strokeColor: Color {
             colorScheme == .dark ? .white : .black
         }
-		
+
         var body: some View {
             BuyMeACoffeeButton(username: "myusername")
-                .buttonStyle(BuyMeACoffeeButtonStyle(tint: backgroundColor))
-                .cornerRadius(10)
-                .overlay(RoundedRectangle(cornerRadius: 10)
-                    .strokeBorder(strokeColor, lineWidth: 1)
-                )
+	        .buttonStyle(BuyMeACoffeeButtonStyle(tint: backgroundColor))
+	        .cornerRadius(10)
+	        .overlay(RoundedRectangle(cornerRadius: 10)
+	            .strokeBorder(strokeColor, lineWidth: 1)
+	        )
         }
     }
     ```
