@@ -21,7 +21,7 @@ public struct BuyMeACoffeeText {
 	
 	// TODO: find or make an icon.
 	/// The beer text.
-	@available(swift 999)
+	@available(*, unavailable)
 	public static let beer: Self = .init(.init("buy_me_a_beer", bundle: .module))
 	
 	// TODO: localize text in more languages.
@@ -30,6 +30,6 @@ public struct BuyMeACoffeeText {
 	
 	// TODO: find or make an icon.
 	/// The pizza text.
-	@available(swift 999)
+    @available(*, unavailable)
 	public static let pizza: Self = .init(.init("buy_me_a_pizza", bundle: .module))
 }

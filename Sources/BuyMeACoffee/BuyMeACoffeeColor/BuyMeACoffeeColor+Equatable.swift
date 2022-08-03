@@ -7,6 +7,6 @@
 
 extension BuyMeACoffeeColor: Equatable {
 	public static func == (_ lhs: Self, _ rhs: Self) -> Bool {
-		return lhs.color == rhs.color
+        lhs.color == rhs.color
 	}
 }

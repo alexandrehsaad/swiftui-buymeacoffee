@@ -9,7 +9,7 @@ import SwiftUI
 
 extension BuyMeACoffeeButton: View {
 	public var body: some View {
-		return Link(destination: self.url) {
+		Link(destination: self.url) {
 			Label {
 				self.text
 			} icon: {

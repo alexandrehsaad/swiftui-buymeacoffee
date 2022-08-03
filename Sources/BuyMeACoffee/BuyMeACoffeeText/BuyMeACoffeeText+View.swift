@@ -9,6 +9,6 @@ import SwiftUI
 
 extension BuyMeACoffeeText: View {
 	public var body: some View {
-		return self.text
+		self.text
 	}
 }

@@ -9,6 +9,6 @@ import SwiftUI
 
 extension BuyMeACoffeeColor: View {
 	public var body: some View {
-		return self.color
+        self.color
 	}
 }

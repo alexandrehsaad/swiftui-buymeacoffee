@@ -9,7 +9,7 @@ import SwiftUI
 
 extension BuyMeACoffeeButtonStyle: ButtonStyle {
 	public func makeBody(configuration: Self.Configuration) -> some View {
-		return Group {
+		Group {
 			switch self.tint {
 			case .black:
 				configuration.label

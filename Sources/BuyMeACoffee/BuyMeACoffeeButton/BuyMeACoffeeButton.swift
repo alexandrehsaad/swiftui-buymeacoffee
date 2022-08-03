@@ -33,6 +33,6 @@ public struct BuyMeACoffeeButton {
 	
 	///
 	internal var url: URL {
-		return .init(string: "https://www.buymeacoffee.com/\(self.username)")!
+		.init(string: "https://www.buymeacoffee.com/\(self.username)")!
 	}
 }
