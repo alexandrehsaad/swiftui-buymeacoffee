@@ -28,6 +28,10 @@ public struct BuyMeACoffeeButton {
     @Environment(\._buyMeACoffeeButtonOpenAction)
     private var openAction
 
+    /// The locale used to resolve the button’s accessible wording.
+    @Environment(\.locale)
+    private var locale: Locale
+
     /// A multiplier that scales the icon width relative to the title text style.
     @ScaledMetric(relativeTo: .title3)
     private var scale: CGFloat = 1
@@ -38,9 +42,9 @@ public struct BuyMeACoffeeButton {
     /// The localized wording shown beside the icon.
     private let label: BuyMeACoffeeLabel
 
-    /// The localized resource exposed as the accessibility label.
-    internal var accessibilityLabel: LocalizedStringResource {
-        return self.label.text.localizedStringResource
+    /// The localized wording exposed as the accessibility label.
+    private var accessibilityLabel: String {
+        return self.label.text.localizedString(locale: self.locale)
     }
 
     /// Creates a new instance with the specified username.
@@ -85,7 +89,7 @@ extension BuyMeACoffeeButton: View {
             }
         )
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(self.accessibilityLabel))
+        .accessibilityLabel(Text(verbatim: self.accessibilityLabel))
         .accessibilityIdentifier(Self.Constants.accessibilityIdentifier)
     }
 }

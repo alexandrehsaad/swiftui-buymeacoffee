@@ -71,8 +71,8 @@ internal struct TutorialSnapshotTests {
         }
     }
 
-    @Test("Make tutorial chapter 1 section 1 step 5 screenshot")
-    internal func makeTutorialChapter1Section1Step5Screenshot() {
+    @Test("Make tutorial chapter 1 section 1 step 4 screenshot")
+    internal func makeTutorialChapter1Section1Step4Screenshot() {
         guard #available(iOS 26, *) else { return }
 
         assertScreenshot {

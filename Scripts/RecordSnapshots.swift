@@ -26,7 +26,7 @@ fileprivate struct RecordingArguments {
         Re-records the iOS snapshots, then verifies the new references with recording disabled.
         Default destination: platform=iOS Simulator,name=iPhone 17,OS=26.5
         Example filter: testButtonStyles
-        Repository asset: RepositorySnapshots/makeGitHubBanner
+        Repository asset: RepositorySnapshotTests/makeReadMeBanner
         Requires Xcode 26 or later and an installed iOS 26 or later simulator runtime.
         Use --help to display this message without building or recording.
         """
@@ -483,7 +483,9 @@ do {
                 testTargetName: repositoryTarget
             ).run()
         } else {
-            let targetName: String = arguments.filter?.hasPrefix("RepositorySnapshots/") == true
+            let targetName: String = ["RepositorySnapshotTests/", "TutorialSnapshotTests/"].contains {
+                arguments.filter?.hasPrefix($0) == true
+            }
                 ? repositoryTarget
                 : comparisonTarget
             try SnapshotRecorder(

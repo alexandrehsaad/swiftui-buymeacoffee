@@ -13,13 +13,14 @@ internal enum BuyMeACoffeeText: String {
     /// The coffee text.
     case coffee = "buymeacoffee.label.coffee"
 
-    /// The localized resource for this wording.
-    internal var localizedStringResource: LocalizedStringResource {
-        return .init(
-            .init(self.rawValue),
-            bundle: .module
-        )
+    /// Resolves this wording from the package bundle for the supplied locale.
+    ///
+    /// - Parameter locale: The language and region used to localize the wording.
+    /// - Returns: The localized string, supported on iOS 15 and later.
+    internal func localizedString(locale: Locale) -> String {
+        return String(localized: .init(self.rawValue), bundle: .module, locale: locale)
     }
+
 }
 
 // MARK: - Equatable

@@ -6,7 +6,7 @@ let package = Package(
     name: "swiftui-buymeacoffee",
     defaultLocalization: "en",
     platforms: [
-        .iOS(.v17)
+        .iOS(.v15)
     ],
     products: [
         .library(

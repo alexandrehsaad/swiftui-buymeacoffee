@@ -4,7 +4,7 @@ Add BuyMeACoffee to a Swift package and import the public product.
 
 ## Overview
 
-BuyMeACoffee is distributed as a Swift package. Add it as a dependency, attach the `BuyMeACoffee` product to your 
+BuyMeACoffee is distributed as a Swift package. Add it as a dependency, attach the `BuyMeACoffee` product to your
 target, and import the module in source files that use its button.
 
 ### Add the Package Dependency
@@ -17,7 +17,7 @@ let package: Package = .init(
     dependencies: [
         .package(
             url: "https://github.com/alexandrehsaad/swiftui-buymeacoffee.git",
-            from: "2.0.0"
+            from: "1.0.0"
         )
     ],
     ...
@@ -26,7 +26,7 @@ let package: Package = .init(
 
 ### Attach the Product to a Target
 
-Add the `BuyMeACoffee` product to the dependencies of the target that will import it. Replace `YourTarget` with the name 
+Add the `BuyMeACoffee` product to the dependencies of the target that will import it. Replace `YourTarget` with the name
 of that target.
 
 ```swift

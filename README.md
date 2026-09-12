@@ -1,4 +1,4 @@
-![](Tests/RepositorySnapshotTests/__Snapshots__/RepositorySnapshots/makeReadMeBanner.1.png)
+![](Tests/RepositorySnapshotTests/__Snapshots__/RepositorySnapshotTests/makeReadMeBanner.1.png)
 
 # SwiftUI Buy Me a Coffee
 
@@ -11,7 +11,7 @@ Liquid Glass button styles, selectable tints, and an automatic contrasting borde
 interfaces.
 
 The button works with standard SwiftUI label styles and button border shapes, supports Dynamic Type and accessibility
-settings, and can display localized text or the official Buy Me a Coffee logo alongside its matching icon.
+settings, and displays the official Buy Me a Coffee logo alongside its matching icon.
 
 ## Requirements
 
@@ -30,8 +30,8 @@ BuyMeACoffee is written in Swift and is available on iOS platforms.
         ...
         dependencies: [
             .package(
-                url: "https://github.com/bikecalc/swiftui-buymeacoffee.git",
-                from: "2.0.0"
+                url: "https://github.com/alexandrehsaad/swiftui-buymeacoffee.git",
+                from: "1.0.0"
             )
         ],
         ...
@@ -64,7 +64,7 @@ BuyMeACoffee is written in Swift and is available on iOS platforms.
     ```swift
     import BuyMeACoffee
     ```
-    
+
 ## Demonstration
 
 ```swift
@@ -73,11 +73,13 @@ BuyMeACoffeeButton(username: "myusername")
     .buttonStyle(.buyMeACoffeeGlass(tint: .yellow))
 ```
 
+The glass style requires iOS 26 or later. Use `.buyMeACoffee(tint: .yellow)` on earlier versions.
+
 The code above renders the button below. Click it to visit my Buy Me a Coffee page.
 
 <a href="https://www.buymeacoffee.com/alexandrehsaad">
     <img
-        src="Tests/RepositorySnapshotTests/__Snapshots__/RepositorySnapshots/makeBuyMeACoffeeButton.1.png"
+        src="Tests/RepositorySnapshotTests/__Snapshots__/RepositorySnapshotTests/makeBuyMeACoffeeButton.1.png"
         alt="Buy me a coffee"
         height="72"
     >
@@ -90,7 +92,7 @@ You can read more about this package by visiting the
 
 ## License
 
-Distributed under the [MIT License](LICENSE.md). See the [third-party notices](THIRD_PARTY_NOTICES.md) for materials 
+Distributed under the [MIT License](LICENSE.md). See the [third-party notices](THIRD_PARTY_NOTICES.md) for materials
 covered by separate terms.
 
 This is an independent, unofficial project and is not affiliated with, sponsored by, or endorsed by Buy Me a Coffee. The

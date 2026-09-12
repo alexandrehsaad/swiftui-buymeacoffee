@@ -9,8 +9,6 @@
 import SwiftUI
 
 #Preview {
-    let tints: Array<BuyMeACoffeeTint> = [.black, .white, .yellow]
-
     ScrollView {
         LazyVStack {
             Section {

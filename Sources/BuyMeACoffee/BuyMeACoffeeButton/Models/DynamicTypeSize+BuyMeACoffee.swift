@@ -8,7 +8,6 @@
 
 import SwiftUI
 
-/// Dynamic Type adjustments applied to the contents of a `BuyMeACoffeeButton`.
 extension DynamicTypeSize {
     /// The horizontal offset applied to the image for the current Dynamic Type size.
     internal var imageOffset: CGFloat {

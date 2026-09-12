@@ -31,7 +31,7 @@
                 sign in [here](https://buymeacoffee.com/login); otherwise,
                 create an account [here](https://buymeacoffee.com/signup).
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "01-05.swift") {
-                    @Image(source: "makeTutorialChapter1Section1Step5Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section1Step4Screenshot.1.png")
                 }
             }
         }

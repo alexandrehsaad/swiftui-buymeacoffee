@@ -36,14 +36,9 @@ internal struct BuyMeACoffeeButtonTests {
 
     @Test("Localizes the accessibility label in English")
     internal func localizesAccessibilityLabelInEnglish() {
-        let button = BuyMeACoffeeButton(
-            username: "myusername",
-            label: .coffee
-        )
-        var accessibilityLabel = button.accessibilityLabel
-        accessibilityLabel.locale = Locale(identifier: "en")
+        let accessibilityLabel = BuyMeACoffeeLabel.coffee.text.localizedString(locale: .en)
 
-        #expect(String(localized: accessibilityLabel) == "Buy me a coffee")
+        #expect(accessibilityLabel == "Buy me a coffee")
     }
 
     @Test("Provides an accessibility identifier")

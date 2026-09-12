@@ -9,7 +9,7 @@ Liquid Glass button styles, selectable tints, and an automatic contrasting borde
 interfaces.
 
 The button works with standard SwiftUI label styles and button border shapes, supports Dynamic Type and accessibility
-settings, and can display localized text or the official Buy Me a Coffee logo alongside its matching icon.
+settings, and displays the official Buy Me a Coffee logo alongside its matching icon.
 
 ## Topics
 

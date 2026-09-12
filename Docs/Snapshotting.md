@@ -12,12 +12,10 @@ Recording is an explicit action. Without a filter, the command records both the 
 repository artwork, then verifies the resulting images with recording disabled. Ordinary Xcode tests and continuous
 integration compare only the visual-regression references without updating them.
 
-The iOS suite lives in `Tests/BuyMeACoffeeSnapshotTests`. Its `__Snapshots__` directory contains light and dark
-references for the system styles, glass styles, custom fonts and colors, and Dynamic Type sizes. The old 
-`BuyMeACoffeeTests` snapshot suite has been removed.
-
-`Tests/RepositorySnapshotTests` contains explicitly produced repository artwork. It is a separate target because its
-images are deliverables rather than visual-regression references, and the continuous-integration scheme excludes it.
+The iOS suite lives in `Tests/BuyMeACoffeeSnapshotTests`. Its `__Snapshots__` directory contains reference snapshots
+for the button. `Tests/BuyMeACoffeeTests` contains the separate unit-test suite. `Tests/RepositorySnapshotTests`
+contains explicitly produced repository artwork. It is a separate target because its images are deliverables rather than
+visual-regression references, and the continuous-integration scheme excludes it.
 
 `Package.swift` declares `BuyMeACoffeeSnapshotTests`. The generated host project also defines a native test target
 with the same name, pointing to the same Swift source file and reference directory. This native target supplies the
@@ -76,7 +74,7 @@ is included in an unfiltered recording run, but continuous integration does not 
 swift package --disable-sandbox plugin \
     --allow-writing-to-package-directory \
     --allow-network-connections all \
-    record-snapshots --filter RepositorySnapshots/makeGitHubBanner
+    record-snapshots --filter RepositorySnapshotTests/makeReadMeBanner
 ```
 
 Use `--destination` to select another installed iOS simulator:
@@ -102,13 +100,14 @@ The plugin forwards its options to the Swift script. Invoke it directly when a p
 ```shell
 swift Scripts/RecordSnapshots.swift
 swift Scripts/RecordSnapshots.swift --filter testButtonStyles
-swift Scripts/RecordSnapshots.swift --filter RepositorySnapshots/makeGitHubBanner
+swift Scripts/RecordSnapshots.swift --filter RepositorySnapshotTests/makeReadMeBanner
 ```
 
-The script first runs `Scripts/GenerateSnapshotHost.swift`, then runs `xcodebuild build-for-testing` once. It creates 
-disposable copies of the resulting `.xctestrun` configuration beside the build products, setting 
-`SNAPSHOT_TESTING_RECORD` to `all` for recording and `never` for verification. Both runs use the same compiled tests, 
-destination, and filter. The normal Xcode comparison scheme is never changed, and no recording compilation flag is 
+The script first runs `Scripts/GenerateSnapshotHost.swift`, then runs `xcodebuild build-for-testing` once per selected
+target. It creates
+disposable copies of the resulting `.xctestrun` configuration beside the build products, setting
+`SNAPSHOT_TESTING_RECORD` to `all` for recording and `never` for verification. Both runs use the same compiled tests,
+destination, and filter. The normal Xcode comparison scheme is never changed, and no recording compilation flag is
 cached in the build.
 
 SnapshotTesting intentionally reports assertion failures when recording. The script checks Xcode's structured
@@ -150,6 +149,6 @@ After generation, you can also open that disposable project in Xcode to run comp
 The `Test` workflow uses a macOS runner with Xcode 26.5 to run the iOS host on an iPhone 17 simulator with iOS 26.5.
 The runner operating system does not determine the rendering platform: the simulator destination does.
 
-CI generates the host, then invokes Xcode directly and never runs the recording plugin. Missing or changed references 
-fail the job, and Xcode results are uploaded for inspection. Update references locally with the recording command, 
+CI generates the host, then invokes Xcode directly and never runs the recording plugin. Missing or changed references
+fail the job, and Xcode results are uploaded for inspection. Update references locally with the recording command,
 review the differences, and commit them with the corresponding change.
