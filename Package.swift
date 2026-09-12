@@ -17,6 +17,10 @@ let package = Package(
         )
     ],
     dependencies: [
+        .package(
+            url: "https://github.com/pointfreeco/swift-snapshot-testing",
+            from: "1.19.4"
+        ),
     ],
     targets: [
         .target(
@@ -24,6 +28,25 @@ let package = Package(
             path: "Sources",
             resources: [
                 .process("BuyMeACoffee/Resources")
+            ]
+        ),
+        .testTarget(
+            name: "BuyMeACoffeeTests",
+            dependencies: [
+                "BuyMeACoffee"
+            ]
+        ),
+        .testTarget(
+            name: "BuyMeACoffeeSnapshotTests",
+            dependencies: [
+                "BuyMeACoffee",
+                .product(
+                    name: "SnapshotTesting",
+                    package: "swift-snapshot-testing")
+
+            ],
+            exclude: [
+                "__Snapshots__"
             ]
         ),
     ],
