@@ -21,6 +21,10 @@ let package = Package(
             url: "https://github.com/pointfreeco/swift-snapshot-testing",
             from: "1.19.4"
         ),
+        .package(
+            url: "https://github.com/swiftlang/swift-docc-plugin.git",
+            from: "1.5.0"
+        )
     ],
     targets: [
         .plugin(
@@ -67,6 +71,19 @@ let package = Package(
                 "__Snapshots__"
             ]
         ),
+        .testTarget(
+            name: "RepositorySnapshotTests",
+            dependencies: [
+                "BuyMeACoffee",
+                .product(
+                    name: "SnapshotTesting",
+                    package: "swift-snapshot-testing")
+
+            ],
+            exclude: [
+                "__Snapshots__"
+            ]
+        )
     ],
     swiftLanguageModes: [.v6]
 )
