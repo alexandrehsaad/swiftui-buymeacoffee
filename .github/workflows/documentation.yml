@@ -38,15 +38,15 @@ jobs:
             DOCC_HOSTING_BASE_PATH=swiftui-buymeacoffee
           xcrun docc process-archive transform-for-static-hosting \
             .build/documentation/Build/Products/Debug-iphonesimulator/BuyMeACoffee.doccarchive \
-            --output-path .build/documentation-site \
+            --output-path ./docs \
             --hosting-base-path swiftui-buymeacoffee
-          echo '<meta http-equiv="refresh" content="0; url=documentation/buymeacoffee/">' > .build/documentation-site/index.html
+          echo '<meta http-equiv="refresh" content="0; url=documentation/buymeacoffee/">' > docs/index.html
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ".build/documentation-site"
+          path: "docs"
       - name: Deploy Documentation
         id: deployment
         uses: actions/deploy-pages@v4
