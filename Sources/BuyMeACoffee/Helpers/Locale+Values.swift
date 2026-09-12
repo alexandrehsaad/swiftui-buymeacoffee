@@ -9,6 +9,6 @@
 import SwiftUI
 
 extension Locale {
-    // The English locale.
-    internal static let en: Self = .init(identifier: "en")
+    /// The English locale.
+    package static let en: Self = .init(identifier: "en")
 }

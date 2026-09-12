@@ -9,14 +9,6 @@
 import SwiftUI
 
 extension View {
-    @ViewBuilder
-    internal func backport<Content>(
-        @ViewBuilder content: (Self) -> Content
-    ) -> some View
-    where Content: View {
-        content(self)
-    }
-
     /// Applies a transformation when a condition is true.
     ///
     /// - Parameters:

@@ -6,8 +6,8 @@
 // See LICENSE.md for license information
 // See CONTRIBUTORS.txt for the list of project authors
 
+import BuyMeACoffeeSnapshotTesting
 import Foundation
-import SnapshotTesting
 import SwiftUI
 import Testing
 import UIKit
@@ -20,7 +20,7 @@ import UIKit
     .snapshots(record: ProcessInfo.processInfo.environment["SNAPSHOT_TESTING_RECORD"] == "all" ? .all : .never)
 )
 @MainActor
-internal struct RepositorySnapshotTests {
+internal struct RepositorySnapshotTests: SnapshotTestable {
     @Test("Make ReadMe banner")
     internal func makeReadMeBanner() {
         guard #available(iOS 26, *) else { return }
@@ -30,7 +30,7 @@ internal struct RepositorySnapshotTests {
                 .buttonStyle(.buyMeACoffeeGlass(tint: tint))
         }
 
-        assertBanner {
+        assertView(colorScheme: .light) {
             Grid {
                 GridRow {
                     button(tint: .purple)
@@ -82,51 +82,18 @@ internal struct RepositorySnapshotTests {
                     button(tint: .white)
                 }
             }
-            .fixedSize()
             .padding()
             .frame(width: 1_280, height: 680)
-            .background(.white)
-            .environment(\.colorScheme, .light)
         }
     }
 
     @Test("Make ReadMe button")
-    internal func makeBuyMeACoffeeButton() {
+    internal func makeReadMeButton() {
         guard #available(iOS 26, *) else { return }
 
-        assertBanner {
+        assertView(backgroundColor: .clear, colorScheme: .light) {
             BuyMeACoffeeButton(username: "")
                 .buttonStyle(.buyMeACoffeeGlass(tint: .yellow))
-                .fixedSize()
         }
-    }
-}
-
-extension RepositorySnapshotTests {
-    /// Asserts a transparent snapshot of the supplied view at its fitted size.
-    ///
-    /// - Parameters:
-    ///   - testName: The test function used to name the snapshot.
-    ///   - content: A closure that creates the view to snapshot.
-    private func assertBanner<Content>(
-        testName: String = #function,
-        @ViewBuilder content: () -> Content
-    ) where Content: View {
-        let controller = UIHostingController(rootView: content())
-        controller.safeAreaRegions = []
-        controller.view.backgroundColor = .clear
-        controller.view.isOpaque = false
-
-        assertSnapshot(
-            of: controller,
-            as: .image(
-                drawHierarchyInKeyWindow: true,
-                precision: 1,
-                perceptualPrecision: 0.98,
-                size: controller.sizeThatFits(in: .zero),
-                traits: .init(displayScale: 3)
-            ),
-            testName: testName
-        )
     }
 }

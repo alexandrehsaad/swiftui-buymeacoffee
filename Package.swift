@@ -10,6 +10,10 @@ let package = Package(
     ],
     products: [
         .library(
+            name: "BuyMeACoffeeSnapshotTesting",
+            targets: ["BuyMeACoffeeSnapshotTesting"]
+        ),
+        .library(
             name: "BuyMeACoffee",
             targets: [
                 "BuyMeACoffee"
@@ -47,9 +51,18 @@ let package = Package(
         ),
         .target(
             name: "BuyMeACoffee",
-            path: "Sources",
             resources: [
-                .process("BuyMeACoffee/Resources")
+                .process("Resources")
+            ]
+        ),
+        .target(
+            name: "BuyMeACoffeeSnapshotTesting",
+            dependencies: [
+                "BuyMeACoffee",
+                .product(
+                    name: "SnapshotTesting",
+                    package: "swift-snapshot-testing"
+                )
             ]
         ),
         .testTarget(
@@ -62,10 +75,7 @@ let package = Package(
             name: "BuyMeACoffeeSnapshotTests",
             dependencies: [
                 "BuyMeACoffee",
-                .product(
-                    name: "SnapshotTesting",
-                    package: "swift-snapshot-testing")
-
+                "BuyMeACoffeeSnapshotTesting"
             ],
             exclude: [
                 "__Snapshots__"
@@ -75,10 +85,7 @@ let package = Package(
             name: "RepositorySnapshotTests",
             dependencies: [
                 "BuyMeACoffee",
-                .product(
-                    name: "SnapshotTesting",
-                    package: "swift-snapshot-testing")
-
+                "BuyMeACoffeeSnapshotTesting"
             ],
             exclude: [
                 "__Snapshots__"

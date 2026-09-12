@@ -2,8 +2,9 @@
     @Intro(title: "Build with BuyMeACoffee") {
         Create a BuyMeACoffeeButton and customize its content, shape, tint, and button style.
     }
+
     @Chapter(name: "Create and Style Your Button") {
-        @Image(source: "makeTutorialChapter1Banner.1.png")
+        @Image(source: "makeTutorialChapter1Banner.light.png")
         @TutorialReference(tutorial: "doc:CustomizingABuyMeACoffeeButton")
     }
 }

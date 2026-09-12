@@ -370,6 +370,7 @@ private final class SnapshotProjectBuilder {
         // Package product references linked into the hosted test target.
         let dependencies = [
             (package, "BuyMeACoffee"),
+            (package, "BuyMeACoffeeSnapshotTesting"),
             (snapshotPackage, "SnapshotTesting"),
         ].map {
             object("XCSwiftPackageProductDependency", ["package": $0.0, "productName": $0.1])
@@ -408,6 +409,8 @@ private final class SnapshotProjectBuilder {
                 "productReference": testProduct,
                 "buildConfigurationList": settings([
                     "PRODUCT_BUNDLE_IDENTIFIER": "org.buymeacoffee.\(testName)",
+                    // These test sources belong to the local package and use its package-scoped helpers.
+                    "OTHER_SWIFT_FLAGS": "$(inherited) -package-name swiftui_buymeacoffee",
                     "TEST_HOST": "$(BUILT_PRODUCTS_DIR)/SnapshotHost.app/SnapshotHost", "BUNDLE_LOADER": "$(TEST_HOST)",
                 ]),
                 "buildPhases": [

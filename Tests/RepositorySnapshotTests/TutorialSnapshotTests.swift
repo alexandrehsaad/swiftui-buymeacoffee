@@ -6,8 +6,8 @@
 // See LICENSE.md for license information
 // See CONTRIBUTORS.txt for the list of project authors
 
+import BuyMeACoffeeSnapshotTesting
 import Foundation
-import SnapshotTesting
 import SwiftUI
 import Testing
 import UIKit
@@ -20,12 +20,7 @@ import UIKit
     .snapshots(record: ProcessInfo.processInfo.environment["SNAPSHOT_TESTING_RECORD"] == "all" ? .all : .never)
 )
 @MainActor
-internal struct TutorialSnapshotTests {
-    @Test("Make tutorial banner")
-    internal func makeTutorialBanner() {
-        // No-op
-    }
-
+internal struct TutorialSnapshotTests: SnapshotTestable {
     @Test("Make tutorial chapter 1 banner")
     internal func makeTutorialChapter1Banner() {
         guard #available(iOS 26, *) else { return }
@@ -35,7 +30,7 @@ internal struct TutorialSnapshotTests {
                 .buttonStyle(.buyMeACoffeeGlass(tint: tint))
         }
 
-        assertBanner {
+        assertView(colorScheme: .light) {
             Grid {
                 GridRow {
                     button(tint: .purple)
@@ -63,11 +58,8 @@ internal struct TutorialSnapshotTests {
                     button(tint: .red)
                 }
             }
-            .fixedSize()
             .padding()
             .padding()
-            .background(.white)
-            .environment(\.colorScheme, .light)
         }
     }
 
@@ -389,60 +381,30 @@ internal struct TutorialSnapshotTests {
 }
 
 extension TutorialSnapshotTests {
-    /// Asserts a transparent snapshot of the supplied view at its fitted size.
-    ///
-    /// - Parameters:
-    ///   - testName: The test function used to name the snapshot.
-    ///   - content: A closure that creates the view to snapshot.
-    private func assertBanner<Content>(
-        testName: String = #function,
-        @ViewBuilder content: () -> Content
-    ) where Content: View {
-        let view: some View = content().fixedSize()
-        let controller = UIHostingController(rootView: view)
-        controller.safeAreaRegions = []
-        controller.view.backgroundColor = .clear
-        controller.view.isOpaque = false
-
-        assertSnapshot(
-            of: controller,
-            as: .image(
-                drawHierarchyInKeyWindow: true,
-                precision: 1,
-                perceptualPrecision: 0.98,
-                size: controller.sizeThatFits(in: .zero),
-                traits: .init(displayScale: 3)
-            ),
-            testName: testName
-        )
-    }
-
     /// Asserts a light-mode screenshot of the supplied view at the tutorial canvas size.
     ///
     /// - Parameters:
     ///   - testName: The test function used to name the screenshot.
     ///   - content: A closure that creates the view to capture.
+    @available(iOS 16.4, *)
     private func assertScreenshot<Content>(
         testName: String = #function,
+        fileID: StaticString = #fileID,
+        file: StaticString = #filePath,
+        line: UInt = #line,
+        column: UInt = #column,
         @ViewBuilder content: () -> Content
     ) where Content: View {
-        let view: some View = content()
-            .fixedSize()
-            .frame(width: 375, height: 812)
-            .background(.white)
-            .environment(\.colorScheme, .light)
-            .environment(\.locale, Locale(identifier: "en_US"))
-
-        assertSnapshot(
-            of: view,
-            as: .image(
-                drawHierarchyInKeyWindow: true,
-                precision: 1,
-                perceptualPrecision: 0.98,
-                layout: .sizeThatFits,
-                traits: .init(displayScale: 3)
-            ),
-            testName: testName
-        )
+        assertView(
+            testName: testName,
+            fileID: fileID,
+            file: file,
+            line: line,
+            column: column,
+            colorScheme: .light
+        ) {
+            content()
+                .frame(width: 375, height: 812)
+        }
     }
 }

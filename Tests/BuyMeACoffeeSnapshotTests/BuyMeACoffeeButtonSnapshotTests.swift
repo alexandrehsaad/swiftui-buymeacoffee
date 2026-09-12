@@ -6,8 +6,8 @@
 // See LICENSE.md for license information
 // See CONTRIBUTORS.txt for the list of project authors
 
+import BuyMeACoffeeSnapshotTesting
 import Foundation
-import SnapshotTesting
 import SwiftUI
 import Testing
 
@@ -19,7 +19,7 @@ import Testing
     .snapshots(record: ProcessInfo.processInfo.environment["SNAPSHOT_TESTING_RECORD"] == "all" ? .all : .never)
 )
 @MainActor
-internal struct BuyMeACoffeeButtonSnapshotTests {
+internal struct BuyMeACoffeeButtonSnapshotTests: SnapshotTestable {
     @Test("Button control sizes")
     internal func testButtonControlSizes() {
         guard #available(iOS 26, *) else { return }
@@ -34,6 +34,7 @@ internal struct BuyMeACoffeeButtonSnapshotTests {
                     }
                 }
             }
+            .padding()
         }
     }
 
@@ -54,6 +55,7 @@ internal struct BuyMeACoffeeButtonSnapshotTests {
                     }
                 }
             }
+            .padding()
         }
     }
 
@@ -71,6 +73,7 @@ internal struct BuyMeACoffeeButtonSnapshotTests {
                     }
                 }
             }
+            .padding()
         }
     }
 
@@ -93,6 +96,7 @@ internal struct BuyMeACoffeeButtonSnapshotTests {
                         .buttonStyle(.buyMeACoffeeGlass(tint: tint))
                 }
             }
+            .padding()
         }
 
         assertView(colorScheme: .light) {
@@ -121,6 +125,7 @@ internal struct BuyMeACoffeeButtonSnapshotTests {
                     }
                 }
             }
+            .padding()
         }
     }
 
@@ -141,6 +146,7 @@ internal struct BuyMeACoffeeButtonSnapshotTests {
             }
             .buttonStyle(.buyMeACoffeeGlass())
             .frame(width: 256)
+            .padding()
         }
     }
 
@@ -168,6 +174,7 @@ internal struct BuyMeACoffeeButtonSnapshotTests {
                 GridRow { labelCells { BuyMeACoffeeButton(username: "").buttonStyle(.glassProminent) } }
                 GridRow { labelCells { BuyMeACoffeeButton(username: "").buttonStyle(.buyMeACoffeeGlass()) } }
             }
+            .padding()
         }
     }
 
@@ -184,6 +191,7 @@ internal struct BuyMeACoffeeButtonSnapshotTests {
                     }
                 }
             }
+            .padding()
         }
     }
 
@@ -191,7 +199,7 @@ internal struct BuyMeACoffeeButtonSnapshotTests {
     internal func testButtonTintsHighContrasts() {
         guard #available(iOS 26, *) else { return }
 
-        assertView(colorSchemeContrast: .high) {
+        assertView(accessibilityContrast: .high) {
             Grid {
                 ForEach(BuyMeACoffeeTint.allCases, id: \.self) { tint in
                     GridRow {
@@ -200,6 +208,7 @@ internal struct BuyMeACoffeeButtonSnapshotTests {
                     }
                 }
             }
+            .padding()
         }
     }
 
@@ -226,76 +235,7 @@ internal struct BuyMeACoffeeButtonSnapshotTests {
                 GridRow { wideShapeCells(shape: .roundedRectangle(radius: 12)) }
                 GridRow { wideShapeCells(shape: .capsule) }
             }
-        }
-    }
-}
-
-extension BuyMeACoffeeButtonSnapshotTests {
-    /// Snapshots a view in one appearance using its intrinsic size.
-    ///
-    /// - Parameters:
-    ///   - testName: The test name used for the reference filename.
-    ///   - name: The snapshot name appended to the reference filename.
-    ///   - colorScheme: The light or dark appearance applied to the view.
-    ///   - colorSchemeContrast: The accessibility contrast applied to the snapshot.
-    ///   - content: The view to snapshot.
-    private func assertView<Content>(
-        testName: String = #function,
-        colorScheme: ColorScheme,
-        colorSchemeContrast: UIAccessibilityContrast = .normal,
-        @ViewBuilder content: () -> Content
-    ) where Content: View {
-        let backgroundColor: Color = colorScheme == .light ? .white : .black
-        let view: some View = content()
-            .fixedSize()
             .padding()
-            .background(backgroundColor)
-            .environment(\.colorScheme, colorScheme)
-            .environment(\.locale, Locale(identifier: "en_US"))
-
-        assertSnapshot(
-            of: view,
-            as: .image(
-                drawHierarchyInKeyWindow: true,
-                precision: 1,
-                perceptualPrecision: 0.98,
-                layout: .sizeThatFits,
-                traits: UITraitCollection(
-                    traitsFrom: [
-                        UITraitCollection(accessibilityContrast: colorSchemeContrast),
-                        UITraitCollection(displayScale: 3)
-                    ]
-                )
-            ),
-            named: colorScheme.description,
-            testName: testName
-        )
-    }
-
-    /// Asserts light and dark snapshots of the supplied view.
-    ///
-    /// - Parameters:
-    ///   - testName: The test function used to name the snapshots.
-    ///   - colorSchemeContrast: The accessibility contrast applied to the snapshots.
-    ///   - content: A closure that creates the view to snapshot.
-    private func assertView<Content>(
-        testName: String = #function,
-        colorSchemeContrast: UIAccessibilityContrast = .normal,
-        @ViewBuilder content: () -> Content
-    ) where Content: View {
-        assertView(
-            testName: testName,
-            colorScheme: .light,
-            colorSchemeContrast: colorSchemeContrast
-        ) {
-            content()
-        }
-        assertView(
-            testName: testName,
-            colorScheme: .dark,
-            colorSchemeContrast: colorSchemeContrast
-        ) {
-            content()
         }
     }
 }

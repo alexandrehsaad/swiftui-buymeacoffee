@@ -292,17 +292,20 @@ fileprivate struct SnapshotRecorder {
         try self.writePlan(sourceURL: planURL, destinationURL: recordingPlanURL, record: "all")
         try self.writePlan(sourceURL: planURL, destinationURL: verificationPlanURL, record: "never")
 
-        reportProgress("Recording references…")
+        reportProgress("Recording references… (recording assertions are expected to fail)")
         let recordResultURL: URL = runURL.appendingPathComponent("Record.xcresult")
         let recordStatus: Int32 = try self.test(planURL: recordingPlanURL, resultURL: recordResultURL)
         let recordSummary: Dictionary<String, Any> = try self.result(arguments: ["summary"], resultURL: recordResultURL)
         let failures: Array<Dictionary<String, Any>> =
             recordSummary["testFailures"] as? Array<Dictionary<String, Any>> ?? []
-        let testCount: Int = recordSummary["failedTests"] as? Int ?? 0
-        // Exit 65 alone is insufficient: require executed tests, then inspect every failure below.
-        guard recordStatus == 65, testCount > 0,
-            recordSummary["totalTestCount"] as? Int == testCount,
-            failures.count == testCount
+        let failedTestCount: Int = recordSummary["failedTests"] as? Int ?? 0
+        let passedTestCount: Int = recordSummary["passedTests"] as? Int ?? 0
+        let testCount: Int = recordSummary["totalTestCount"] as? Int ?? 0
+        // Recording assertions fail, but tests without snapshots can pass normally.
+        // Require at least one recording test and inspect every failure below; exit 65 alone is insufficient.
+        guard recordStatus == 65, failedTestCount > 0,
+            testCount == failedTestCount + passedTestCount,
+            failures.count == failedTestCount
         else {
             throw RecordingError(description:
                 "Recording did not execute the expected snapshot tests. Check the filter and \(recordResultURL.path)"

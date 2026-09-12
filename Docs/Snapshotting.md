@@ -111,7 +111,10 @@ destination, and filter. The normal Xcode comparison scheme is never changed, an
 cached in the build.
 
 SnapshotTesting intentionally reports assertion failures when recording. The script checks Xcode's structured
-results and accepts only recording issues, then requires the same tests to pass the comparison run. A build failure,
+results and accepts only recording issues as failures; tests without snapshot assertions may pass normally. It then
+requires the same tests to pass the comparison run. Red tests in `Record.xcresult` are expected when their issue says
+“Record mode is on. Automatically recorded snapshot.” Use `Verify.xcresult` to check the subsequent comparison.
+This recording behavior also applies when no reference images exist. A build failure,
 crash, unknown filter that selects no tests, unexpected assertion, or comparison failure makes the command fail.
 Partially recorded images may remain after a failed run; inspect them before committing.
 

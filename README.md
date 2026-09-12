@@ -1,4 +1,4 @@
-![](Tests/RepositorySnapshotTests/__Snapshots__/RepositorySnapshotTests/makeReadMeBanner.1.png)
+![](Tests/RepositorySnapshotTests/__Snapshots__/RepositorySnapshotTests/makeReadMeBanner.light.png)
 
 # SwiftUI Buy Me a Coffee
 
@@ -17,7 +17,6 @@ settings, and displays the official Buy Me a Coffee logo alongside its matching 
 
 - Swift 6.3+
 - iOS 15+
-- iPadOS 15+
 
 BuyMeACoffee is written in Swift and is available on iOS platforms.
 
@@ -79,7 +78,7 @@ The code above renders the button below. Click it to visit my Buy Me a Coffee pa
 
 <a href="https://www.buymeacoffee.com/alexandrehsaad">
     <img
-        src="Tests/RepositorySnapshotTests/__Snapshots__/RepositorySnapshotTests/makeBuyMeACoffeeButton.1.png"
+        src="Tests/RepositorySnapshotTests/__Snapshots__/RepositorySnapshotTests/makeReadMeButton.light.png"
         alt="Buy me a coffee"
         height="72"
     >

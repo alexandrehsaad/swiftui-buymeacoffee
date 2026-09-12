@@ -2,219 +2,284 @@
     @Intro(title: "Creating and Styling a Buy Me a Coffee Button") {
         Create a Buy Me a Coffee button, explore its label and button styles, and customize its appearance.
     }
+
     @Section(title: "Create a Buy Me a Coffee Button") {
         @ContentAndMedia {
-            Build the button in a SwiftUI preview so that you can see each change and copy the finished code into
-            your project.
+            Build the button in a SwiftUI preview so that you can see each change and copy the finished code into your 
+            project.
         }
+
         @Steps {
             @Step {
                 Import the SwiftUI library, because the Buy Me a Coffee button is a SwiftUI component.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "01-01.swift")
             }
+
             @Step {
                 Import the BuyMeACoffee library to use its button component.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "01-02.swift")
             }
+
             @Step {
                 Add a preview where you can build and inspect the button.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "01-03.swift")
             }
+
             @Step {
                 Initialize a Buy Me a Coffee button.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "01-04.swift") {
-                    @Image(source: "makeTutorialChapter1Section1Step4Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section1Step4Screenshot.light.png")
                 }
             }
+
             @Step {
-                Replace the placeholder with your username. If you have forgotten it,
-                sign in [here](https://buymeacoffee.com/login); otherwise,
-                create an account [here](https://buymeacoffee.com/signup).
+                Replace the placeholder with your username. If you have forgotten it, sign in 
+                [here](https://buymeacoffee.com/login); otherwise, create an account 
+                [here](https://buymeacoffee.com/signup).
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "01-05.swift") {
-                    @Image(source: "makeTutorialChapter1Section1Step4Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section1Step4Screenshot.light.png")
                 }
             }
         }
     }
+
     @Section(title: "Style a Buy Me a Coffee Button") {
         @ContentAndMedia {
             Begin with SwiftUI's button styles, then adopt the predefined Buy Me a Coffee styles and customize their
             shape, label, size, and tint.
         }
+
         @Steps {
             @Step {
                 Apply SwiftUI's plain button style, which is the default system style.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-01.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step1Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step1Screenshot.light.png")
                 }
             }
+
             @Step {
                 Add SwiftUI's borderless button style.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-02.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step2Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step2Screenshot.light.png")
                 }
             }
+
             @Step {
                 Add SwiftUI's bordered button style.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-03.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step3Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step3Screenshot.light.png")
                 }
             }
+
             @Step {
                 Add SwiftUI's bordered prominent button style.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-04.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step4Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step4Screenshot.light.png")
                 }
             }
+
             @Step {
                 On iOS 26 and later, apply SwiftUI's glass button style.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-05.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step5Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step5Screenshot.light.png")
                 }
             }
+
             @Step {
                 Add SwiftUI's glass prominent button style for its more prominent appearance.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-06.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step6Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step6Screenshot.light.png")
                 }
             }
+
             @Step {
                 Customize the glass styles with foreground style. The primary color applies to the icon's outlines
                 and the title, while the secondary color applies to the liquid inside the cup icon.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-07.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step7Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step7Screenshot.light.png")
                 }
             }
+
             @Step {
                 Apply a tint to change the system button's tint.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-08.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step8Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step8Screenshot.light.png")
                 }
             }
+
             @Step {
                 Apply the predefined Buy Me a Coffee button style. It follows the official brand guidelines while
                 adapting the design to Apple platforms.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-09.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step9Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step9Screenshot.light.png")
                 }
             }
+
             @Step {
                 The Buy Me a Coffee button style manages its tint, foreground colors, and symbol rendering. These
                 values cannot be overridden after applying the style, preserving its coordinated appearance.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-10.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step10Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step10Screenshot.light.png")
                 }
             }
+
             @Step {
                 Continue using standard SwiftUI modifiers, such as button border shape, to customize the style. Try
                 rounded rectangles with different corner radii or use a capsule, which is the default shape.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-11.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step11Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step11Screenshot.light.png")
                 }
             }
+
             @Step {
                 Choose an icon-only, title-only, or title-and-icon label style. Displaying both the title and icon is
                 the default.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-12.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step12Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step12Screenshot.light.png")
                 }
             }
+
             @Step {
                 Compare every control size and notice how the button adjusts its padding.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-13.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step13Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step13Screenshot.light.png")
                 }
             }
+
             @Step {
                 On iOS 26 and later, choose fitted sizing or let the button expand flexibly across the available width.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-14.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step14Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step14Screenshot.light.png")
                 }
             }
+
             @Step {
                 Compare every Dynamic Type size and notice how the button preserves its spacing and proportions as its
                 label grows.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-15.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step15Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step15Screenshot.light.png")
                 }
             }
+
             @Step {
                 Choose from the eight tints permitted by the brand guidelines rather than an arbitrary SwiftUI color.
                 These tints automatically adapt to Dark Mode and the Increase Contrast accessibility setting.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-16.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step16Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step16Screenshot.light.png")
                 }
             }
+
             @Step {
                 On iOS 26 and later, replace the solid style with the Buy Me a Coffee glass button style.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "02-17.swift") {
-                    @Image(source: "makeTutorialChapter1Section2Step17Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section2Step17Screenshot.light.png")
                 }
             }
         }
     }
+
     @Section(title: "Backport the Buy Me a Coffee Button") {
         @ContentAndMedia {
             Adapt the solid Buy Me a Coffee button style to the button border APIs available on earlier iOS versions.
         }
+
         @Steps {
             @Step {
                 On iOS 17 and later, use an automatic border to keep black and white button backgrounds visible.
                 Choose no border instead if the border is not wanted.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "03-01.swift") {
-                    @Image(source: "makeTutorialChapter1Section3Step1Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section3Step1Screenshot.light.png")
                 }
             }
+
             @Step {
                 On iOS 15 and 16, where the button border shape API isn't available, apply a clip shape to change the
                 button's shape.
+
                 @Code(name: "BuyMeACoffeeButtonPreview.swift", file: "03-02.swift") {
-                    @Image(source: "makeTutorialChapter1Section3Step2Screenshot.1.png")
+                    @Image(source: "makeTutorialChapter1Section3Step2Screenshot.light.png")
                 }
             }
         }
     }
+
     @Assessments {
         @MultipleChoice {
             Which statement about the Buy Me a Coffee button style is correct?
+
             @Choice(isCorrect: false) {
                 It is available on every iOS version that supports SwiftUI.
+
                 @Justification(reaction: "Not quite.") {
                     The package supports iOS 15 and later, even though SwiftUI is available on earlier iOS versions.
                     Some features, including the glass button style, require iOS 26 or later.
                 }
             }
+
             @Choice(isCorrect: true) {
                 It requires iOS 15 or later.
+
                 @Justification(reaction: "That's right!") {
                     The solid Buy Me a Coffee button style is available from iOS 15. Some features, including the glass
                     button style, require iOS 26 or later.
                 }
             }
+
             @Choice(isCorrect: false) {
                 It requires iOS 26 or later.
+
                 @Justification(reaction: "Not quite.") {
                     Only the glass button style requires iOS 26. The solid Buy Me a Coffee button style is available
                     from iOS 15.
                 }
             }
         }
+
         @MultipleChoice {
             What happens when someone taps the Buy Me a Coffee button?
+
             @Choice(isCorrect: false) {
                 The button completes a transaction directly inside the app.
+
                 @Justification(reaction: "Not quite.") {
                     The button does not initiate or process a transaction inside the app.
                 }
             }
+
             @Choice(isCorrect: true) {
                 The creator's Buy Me a Coffee page opens in the default browser.
+
                 @Justification(reaction: "That's right!") {
                     The button is a link to the creator's Buy Me a Coffee page and leaves transactions to the website.
                 }
             }
+
             @Choice(isCorrect: false) {
                 The Buy Me a Coffee app opens if it is installed. Otherwise, the App Store opens so it can be installed.
+
                 @Justification(reaction: "Not quite.") {
                     The button always opens the creator's page in the default browser without requiring another app.
                 }
