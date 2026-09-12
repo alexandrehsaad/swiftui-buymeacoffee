@@ -23,6 +23,24 @@ let package = Package(
         ),
     ],
     targets: [
+        .plugin(
+            name: "BuyMeACoffeeSnapshotsPlugin",
+            capability: .command(
+                intent: .custom(
+                    verb: "record-snapshots",
+                    description: "Re-record and verify the Buy Me a Coffee iOS snapshots"
+                ),
+                permissions: [
+                    .writeToPackageDirectory(
+                        reason: "Replace the iOS snapshot reference images"
+                    ),
+                    .allowNetworkConnections(
+                        scope: .all(),
+                        reason: "Resolve the snapshot host's Swift package dependencies"
+                    )
+                ]
+            )
+        ),
         .target(
             name: "BuyMeACoffee",
             path: "Sources",
