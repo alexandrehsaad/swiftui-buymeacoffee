@@ -1,0 +1,46 @@
+name: Snapshot Diagnostics
+
+on:
+  pull_request:
+    branches: ["main"]
+    types: ["opened", "reopened", "synchronize"]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    name: Compare Fixed Snapshot Images
+    runs-on: macos-26
+    timeout-minutes: 15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.5.app/Contents/Developer
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+      - name: Get Xcode Version
+        run: xcodebuild -version
+      - name: Compare CI Attachments
+        run: |
+          diagnostic=Tests/BuyMeACoffeeSnapshotTests/SnapshotComparisonDiagnostics.swift
+          trap 'rm -f "$diagnostic"' EXIT
+          cp Scripts/SnapshotDiagnostics/SnapshotComparisonDiagnostics.swift "$diagnostic"
+          xcrun swift Scripts/GenerateSnapshotHost.swift
+          xcodebuild test \
+            -project .build/snapshots/Host/SnapshotHost.xcodeproj \
+            -scheme SnapshotHost \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5' \
+            -only-testing:BuyMeACoffeeSnapshotTests/SnapshotComparisonDiagnostics \
+            -parallel-testing-enabled NO \
+            -resultBundlePath .build/snapshots/Diagnostics.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Upload Diagnostic Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-diagnostics
+          path: .build/snapshots/Diagnostics.xcresult
+          include-hidden-files: true
+          if-no-files-found: ignore
