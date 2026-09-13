@@ -31,7 +31,7 @@ jobs:
       - name: Build Documentation
         run: |
           xcodebuild docbuild \
-            -scheme swiftui-buymeacoffee \
+            -scheme BuyMeACoffee \
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath .build/documentation \
             CODE_SIGNING_ALLOWED=NO \
