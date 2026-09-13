@@ -86,10 +86,12 @@ internal struct BuyMeACoffeeButtonSnapshotTests: SnapshotTestable {
                 GridRow {
                     BuyMeACoffeeButton(username: "")
                         .buttonStyle(.buyMeACoffee(tint: tint, border: .none))
+                        .buttonBorderShape(.roundedRectangle(radius: 8))
                 }
                 GridRow {
                     BuyMeACoffeeButton(username: "")
                         .buttonStyle(.buyMeACoffee(tint: tint, border: .automatic))
+                        .buttonBorderShape(.roundedRectangle(radius: 10))
                 }
                 GridRow {
                     BuyMeACoffeeButton(username: "")
