@@ -33,6 +33,7 @@ jobs:
             -scheme SnapshotHost \
             -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5' \
             -only-testing:BuyMeACoffeeSnapshotTests/SnapshotComparisonDiagnostics \
+            -only-testing:BuyMeACoffeeSnapshotTests/BuyMeACoffeeButtonSnapshotTests \
             -parallel-testing-enabled NO \
             -resultBundlePath .build/snapshots/Diagnostics.xcresult \
             CODE_SIGNING_ALLOWED=NO

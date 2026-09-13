@@ -51,20 +51,31 @@ extension SnapshotTestable {
             controller.view.isOpaque = false
         }
 
+        var snapshotStrategy: Snapshotting<UIViewController, UIImage> = .image(
+            drawHierarchyInKeyWindow: true,
+            precision: 0.98,
+            perceptualPrecision: 0.98,
+            size: controller.sizeThatFits(in: .zero),
+            traits: UITraitCollection(
+                traitsFrom: [
+                    UITraitCollection(accessibilityContrast: accessibilityContrast),
+                    UITraitCollection(displayScale: 3)
+                ]
+            )
+        )
+        let imageDiffing: Diffing<UIImage> = snapshotStrategy.diffing
+        snapshotStrategy.diffing.diffV2 = { reference, captured in
+            // Compare the PNG representation stored by the recorder. Comparing a live extended-range image with a
+            // decoded reference produces false CI failures.
+            guard let png = captured.pngData() else {
+                return ("Could not encode the captured snapshot as PNG.", [])
+            }
+            return imageDiffing.diffV2(reference, imageDiffing.fromData(png))
+        }
+
         assertSnapshot(
             of: controller,
-            as: .image(
-                drawHierarchyInKeyWindow: true,
-                precision: 0.98,
-                perceptualPrecision: 0.98,
-                size: controller.sizeThatFits(in: .zero),
-                traits: UITraitCollection(
-                    traitsFrom: [
-                        UITraitCollection(accessibilityContrast: accessibilityContrast),
-                        UITraitCollection(displayScale: 3)
-                    ]
-                )
-            ),
+            as: snapshotStrategy,
             named: colorScheme.description,
             fileID: fileID,
             file: file,
