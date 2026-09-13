@@ -1,10 +1,10 @@
-// This source file is part of the SwiftUI Buy Me a Coffee open source project
+// This source file is part of the BuyMeACoffee open source project
 //
 // Copyright (c) 2022-2026 Alexandre H. Saad
 // Licensed under the MIT License
 //
 // See LICENSE.md for license information
-// See CONTRIBUTORS.txt for the list of project authors
+// See CONTRIBUTORS.txt for the list of BuyMeACoffee project authors
 
 /// A recording command that did not finish successfully.
 internal enum BuyMeACoffeeSnapshotsPluginError {

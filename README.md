@@ -1,6 +1,6 @@
 ![](Tests/RepositorySnapshotTests/__Snapshots__/RepositorySnapshotTests/makeReadMeBanner.light.png)
 
-# SwiftUI Buy Me a Coffee
+# SwiftUI BuyMeACoffee
 
 A Swift package for creating branded [Buy Me a Coffee](https://www.buymeacoffee.com) links in SwiftUI.
 
@@ -68,7 +68,6 @@ BuyMeACoffee is written in Swift and is available on iOS platforms.
 
 ```swift
 BuyMeACoffeeButton(username: "myusername")
-    .labelStyle(.titleAndIcon)
     .buttonStyle(.buyMeACoffeeGlass(tint: .yellow))
 ```
 
@@ -88,6 +87,15 @@ The code above renders the button below. Click it to visit my Buy Me a Coffee pa
 
 You can read more about this package by visiting the
 [documentation](https://alexandrehsaad.github.io/swiftui-buymeacoffee/documentation/buymeacoffee).
+
+## Contributing
+
+If you find a bug, please create an [issue](https://github.com/alexandrehsaad/swiftui-buymeacoffee/issues). Security 
+vulnerabilities should be reported using the instructions in the [security policy](SECURITY.md).
+
+## Code of Conduct
+
+This project follows a [code of conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
