@@ -53,7 +53,7 @@ extension SnapshotTestable {
 
         var snapshotStrategy: Snapshotting<UIViewController, UIImage> = .image(
             drawHierarchyInKeyWindow: true,
-            precision: 0.98,
+            precision: 0.99,
             perceptualPrecision: 0.98,
             size: controller.sizeThatFits(in: .zero),
             traits: UITraitCollection(
