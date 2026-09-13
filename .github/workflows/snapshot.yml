@@ -1,7 +1,11 @@
 name: Snapshot
 
 on:
-  workflow_dispatch:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main", "release/**"]
+    types: ["opened", "reopened", "synchronize"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
