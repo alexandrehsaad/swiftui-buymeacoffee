@@ -4,44 +4,29 @@ Record and verify the iOS button appearances.
 
 ## Overview
 
-The `BuyMeACoffeeSnapshotsPlugin` command plugin is the convenient interface for developers, and
-`Scripts/RecordSnapshots.swift` is the standalone recording script. Both generate a disposable application under
-`.build/snapshots/Host` to render real iOS views, including Dynamic Type and glass button styles.
+Buy Me a Coffee provides a command plugin for recording snapshots and a standalone recording script. Both generate a
+temporary iOS application to render the button styles, including Liquid Glass. A separate host-generation script 
+prepares the same application for comparisons without recording.
 
-Recording is an explicit action. Without a filter, the command records both the visual-regression snapshots and the
-repository artwork, then verifies the resulting images with recording disabled. Ordinary Xcode tests and continuous
-integration compare only the visual-regression references without updating them.
+Recording is an explicit action. Without a filter, the recorder updates both the button reference images and repository
+artwork, then verifies the resulting images with recording disabled. Comparison runs check existing references without
+modifying them.
 
-The iOS suite lives in `Tests/BuyMeACoffeeSnapshotTests`. Its `__Snapshots__` directory contains reference snapshots
-for the button. `Tests/BuyMeACoffeeTests` contains the separate unit-test suite. `Tests/RepositorySnapshotTests`
-contains explicitly produced repository artwork. It is a separate target because its images are deliverables rather than
-visual-regression references, and the continuous-integration scheme excludes it.
-
-`Package.swift` declares `BuyMeACoffeeSnapshotTests`. The generated host project also defines a native test target
-with the same name, pointing to the same Swift source file and reference directory. This native target supplies the
-application-host configuration used by the recorder and CI. Declaring a SwiftPM test target does not
-configure its host application. Use the host project for recording and comparing these snapshots, particularly
-the glass styles that require a host window. The suite is compiled only on iOS; other destinations do not validate the
-iOS snapshots.
+Button references live in `Tests/BuyMeACoffeeSnapshotTests/__Snapshots__`. Repository artwork is produced by
+`Tests/RepositorySnapshotTests` and is excluded from CI comparisons. Review recorded PNG changes before committing them
+with the corresponding source changes.
 
 ## Requirements
 
-Use Xcode 26.5 and the iOS 26.5 simulator runtime with an iPhone 17 to reproduce the checked-in references. Install the
-runtime in Xcode Settings under Components if necessary. Select that Xcode installation with `xcode-select` or set
-`DEVELOPER_DIR` before invoking the command. A physical device and provisioning profile are not needed.
-
-Use Xcode's bundled toolchain (Xcode > Toolchains > Xcode Default). The separately installed Swift.org 6.3.3
-toolchain fails to compile SnapshotTesting 1.19.4 with `Attachment` / `Attachable` conformance errors; see
-[the upstream issue](https://github.com/pointfreeco/swift-snapshot-testing/issues/1085). Selecting an Xcode installation
-for Terminal does not change the toolchain selected inside Xcode. The references were verified with Xcode's bundled
-Apple Swift 6.3.2 compiler.
-
-The host requires iOS 26 or later because it includes glass styles. The library's minimum deployment versions are
-unchanged. Snapshot images can change with the Xcode version, simulator runtime, display scale, or architecture;
-use the same environment locally and in CI. The suite fixes English (United States), light/dark appearance, and
-image scale. The current references were recorded on Apple silicon.
+Use Xcode 26.5 with its bundled Swift 6.3.2 toolchain and an iPhone 17 simulator running iOS 26.5 to match CI. Install
+the runtime and create the simulator in Xcode if needed. Select the Xcode installation with `xcode-select` or
+`DEVELOPER_DIR` before running the commands.
 
 ## Command Plugin
+
+The `BuyMeACoffeeSnapshotsPlugin` command plugin records snapshots and verifies them on the iOS simulator. Run it from
+Terminal: Xcode's package-command menu keeps the plugin sandboxed, preventing access to services and storage required by
+Xcode and CoreSimulator. The Terminal command uses `--disable-sandbox` to allow this access.
 
 Run the plugin from the repository root:
 
@@ -52,11 +37,8 @@ swift package --disable-sandbox plugin \
     record-snapshots
 ```
 
-SwiftPM's sandbox must be disabled because Xcode and CoreSimulator use services and storage outside the package
-and plugin work directories. The write permission authorizes updating the references; network access lets Xcode
-resolve the host's package dependencies. This command is intended for Terminal. Xcode's sandboxed package-command
-menu cannot run this recorder.
-Selecting a different package target in the plugin menu does not change its permissions.
+The write permission authorizes updating reference images; network access lets Xcode resolve the host's package
+dependencies.
 
 Record one test from the main suite by passing its function name without parentheses:
 
@@ -67,8 +49,8 @@ swift package --disable-sandbox plugin \
     record-snapshots --filter testButtonStyles
 ```
 
-For a test in another suite, prefix the function with its suite name. Repository artwork lives in its own target and
-is included in an unfiltered recording run, but continuous integration does not build or compare it:
+For a test in another suite, prefix the function with its suite name. Repository artwork lives in its own target and is
+included in an unfiltered recording run, but continuous integration does not build or compare it:
 
 ```shell
 swift package --disable-sandbox plugin \
@@ -86,12 +68,12 @@ swift package --disable-sandbox plugin \
     record-snapshots --destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5'
 ```
 
-The default destination is the one shown above. Do not select a different runtime when updating references intended
-for the current CI configuration. Use `record-snapshots --help` for usage information without building or recording.
+The default destination is the one shown above. Do not select a different runtime when updating references intended for
+the current CI configuration. Use `record-snapshots --help` for usage information without building or recording.
 
-Review and commit the resulting PNG changes. Recording does not delete obsolete references or commit files. If a
-test is renamed or removed, remove its old references when reviewing that change. Do not run two recording commands
-at the same time or edit the snapshot views while a recording is in progress.
+Review and commit the resulting PNG changes. Recording does not delete obsolete references or commit files. If a test is
+renamed or removed, remove its old references when reviewing that change. Do not run two recording commands at the same
+time or edit the snapshot views while a recording is in progress.
 
 ## Recording Script
 
@@ -103,37 +85,19 @@ swift Scripts/RecordSnapshots.swift --filter testButtonStyles
 swift Scripts/RecordSnapshots.swift --filter RepositorySnapshotTests/makeReadMeBanner
 ```
 
-The script first runs `Scripts/GenerateSnapshotHost.swift`, then runs `xcodebuild build-for-testing` once per selected
-target. It creates
-disposable copies of the resulting `.xctestrun` configuration beside the build products, setting
-`SNAPSHOT_TESTING_RECORD` to `all` for recording and `never` for verification. Both runs use the same compiled tests,
-destination, and filter. The normal Xcode comparison scheme is never changed, and no recording compilation flag is
-cached in the build.
+The script generates the host application, builds the selected tests, records images, and runs the same tests again with
+recording disabled. Both runs use the same compiled tests, destination, and filter.
 
-SnapshotTesting intentionally reports assertion failures when recording. The script checks Xcode's structured
-results and accepts only recording issues as failures; tests without snapshot assertions may pass normally. It then
-requires the same tests to pass the comparison run. Red tests in `Record.xcresult` are expected when their issue says
-“Record mode is on. Automatically recorded snapshot.” Use `Verify.xcresult` to check the subsequent comparison.
-This recording behavior also applies when no reference images exist. A build failure,
-crash, unknown filter that selects no tests, unexpected assertion, or comparison failure makes the command fail.
-Partially recorded images may remain after a failed run; inspect them before committing.
+SnapshotTesting intentionally reports “Record mode is on” assertion failures in `Record.xcresult`. The script accepts
+these recording failures and requires the subsequent comparison in `Verify.xcresult` to pass. Build failures, unexpected
+assertions, and comparison failures stop the command. Partially recorded images may remain after a failed run.
 
-Build products are stored in `.build/snapshots/DerivedData`. Each invocation prints a unique directory beneath
-`.build/snapshots/Runs` containing build logs, recording and verification logs, and Xcode result bundles. Open a
-result bundle in Xcode for diagnostics. Status messages appear immediately, with elapsed-time updates every ten
-seconds while a tool runs. These outputs are ignored by Git.
+Each invocation prints a directory under `.build/snapshots/Runs` containing logs and Xcode result bundles. Open the
+result bundles in Xcode to inspect failures. Generated build files and logs are ignored by Git.
 
-## Generated Host
-
-No Xcode project or host application source is maintained in the repository. The generator creates them under
-`.build/snapshots/Host`, including a comparison-only `SnapshotHost` scheme. It references the original test sources,
-so recordings are written to the existing test reference directory. SnapshotTesting uses the revision from
-`Package.resolved`. Generated files are only rewritten when their contents change to preserve incremental builds.
-
-The application provides the window needed to capture Liquid Glass. It is disposable: deleting `.build` is safe;
-the next recording command recreates it. Do not edit or commit generated files.
-
-To compare without recording (also used by CI):
+`Scripts/GenerateSnapshotHost.swift` creates the temporary project under `.build/snapshots/Host`. Its `SnapshotHost`
+scheme supplies the application needed to render the button styles. Generate the project and run comparisons without
+updating references:
 
 ```shell
 xcrun swift Scripts/GenerateSnapshotHost.swift
@@ -145,13 +109,17 @@ xcodebuild test \
     CODE_SIGNING_ALLOWED=NO
 ```
 
-After generation, you can also open that disposable project in Xcode to run comparison tests.
+After generation, you can also open `SnapshotHost.xcodeproj` in Xcode, select the `SnapshotHost` scheme and matching
+simulator, and use Product > Test. Use this project rather than testing the package directly so the host application is
+configured. Do not edit or commit the generated project.
 
 ## Continuous Integration
 
-The `Test` workflow uses a macOS runner with Xcode 26.5 to run the iOS host on an iPhone 17 simulator with iOS 26.5.
-The runner operating system does not determine the rendering platform: the simulator destination does.
+The `Snapshot` workflow compares existing references using Xcode 26.5 and an iPhone 17 simulator running iOS 26.5. It
+runs on pushes to `main` and when pull requests targeting `main` or `release/**` are opened, reopened, or updated with
+commits. Superseded runs for the same branch or pull request are cancelled.
 
-CI generates the host, then invokes Xcode directly and never runs the recording plugin. Missing or changed references
-fail the job, and Xcode results are uploaded for inspection. Update references locally with the recording command,
-review the differences, and commit them with the corresponding change.
+CI generates the host and invokes Xcode directly without running the recording plugin. Missing references and images
+outside the comparison tolerance fail the job. Download the `ios-snapshot-results` artifact and open `CI.xcresult` in
+Xcode to inspect failures. Update references locally, review the differences, and commit them with the corresponding
+changes.
