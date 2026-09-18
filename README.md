@@ -66,12 +66,20 @@ BuyMeACoffee is written in Swift and is available on iOS platforms.
 
 ## Demonstration
 
+Create a button with your username, apply a button style, and optionally observe button taps:
+
 ```swift
 BuyMeACoffeeButton(username: "myusername")
     .buttonStyle(.buyMeACoffeeGlass(tint: .yellow))
+    .onBuyMeACoffeeButtonOpen { url in
+        print("Opening URL: \(url)")
+    }
 ```
 
-The glass style requires iOS 26 or later. Use `.buyMeACoffee(tint: .yellow)` on earlier versions.
+The glass style requires iOS 26 or later. Use `buyMeACoffee(tint: .yellow)` on earlier versions.
+
+Use `onBuyMeACoffeeButtonOpen(perform:)` to log interactions or record an analytics event. The callback receives the destination 
+URL before the system is asked to open it. It does not confirm that the page opened or that a donation was completed.
 
 The code above renders the button below. Click it to visit my Buy Me a Coffee page.
 
