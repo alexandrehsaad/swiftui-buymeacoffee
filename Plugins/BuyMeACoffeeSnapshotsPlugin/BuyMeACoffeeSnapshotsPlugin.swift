@@ -9,7 +9,7 @@
 import Foundation
 import PackagePlugin
 
-/// Re-records the iOS snapshot references through the standalone recording script.
+/// Re-records the snapshot references through the standalone recording script.
 @main
 internal struct BuyMeACoffeeSnapshotsPlugin {}
 
@@ -32,10 +32,11 @@ extension BuyMeACoffeeSnapshotsPlugin: CommandPlugin {
         let packageURL: URL = context.package.directoryURL
         let process: Process = .init()
         process.executableURL = .init(fileURLWithPath: "/usr/bin/xcrun")
-        process.arguments = [
-            "swift",
-            packageURL.appendingPathComponent("Scripts/RecordSnapshots.swift").path
-        ] + extractor.remainingArguments
+        process.arguments =
+            [
+                "swift",
+                packageURL.appendingPathComponent("Scripts/RecordSnapshots.swift").path
+            ] + extractor.remainingArguments
         process.currentDirectoryURL = packageURL
 
         try process.run()

@@ -48,6 +48,9 @@
             "context": "Build and Test iOS"
           },
           {
+            "context": "Lint Source Formatting"
+          },
+          {
             "context": "Test iOS Snapshots"
           },
           {

@@ -65,7 +65,7 @@ public struct BuyMeACoffeeButtonStyle {
     @ViewBuilder
     private var borderColor: some View {
         if #available(iOS 17, *) {
-            if self.border != .none, let borderColor: Color = self.tint.borderColor(
+            if let borderColor: Color = self.tint.borderColor(
                 border: self.border,
                 colorScheme: self.colorScheme
             ) {

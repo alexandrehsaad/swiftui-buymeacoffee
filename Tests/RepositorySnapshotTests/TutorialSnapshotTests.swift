@@ -385,6 +385,10 @@ extension TutorialSnapshotTests {
     ///
     /// - Parameters:
     ///   - testName: The test function used to name the screenshot.
+    ///   - fileID: The source file identifier used for assertion reporting.
+    ///   - file: The source file path used to locate reference images.
+    ///   - line: The source line used for assertion reporting.
+    ///   - column: The source column used for assertion reporting.
     ///   - content: A closure that creates the view to capture.
     @available(iOS 16.4, *)
     private func assertScreenshot<Content>(

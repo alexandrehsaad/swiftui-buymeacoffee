@@ -14,6 +14,9 @@ extension URL {
     /// - Parameter username: The account name appended to the Buy Me a Coffee website URL.
     /// - Returns: The URL for the specified Buy Me a Coffee account.
     internal static func buyMeACoffee(username: String) -> Self {
-        return .init(string: "https://www.buymeacoffee.com/\(username)")!
+        guard let url: Self = .init(string: "https://www.buymeacoffee.com/\(username)") else {
+            preconditionFailure("Could not construct the Buy Me a Coffee account URL.")
+        }
+        return url
     }
 }

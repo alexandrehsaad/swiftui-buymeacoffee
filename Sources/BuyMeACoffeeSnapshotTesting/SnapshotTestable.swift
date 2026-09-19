@@ -7,10 +7,9 @@
 // See CONTRIBUTORS.txt for the list of BuyMeACoffee project authors
 
 import BuyMeACoffee
+@_exported import SnapshotTesting
 import SwiftUI
 import UIKit
-
-@_exported import SnapshotTesting
 
 /// Provides shared view snapshot assertions for the package's test suites.
 ///

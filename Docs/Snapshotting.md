@@ -1,6 +1,6 @@
 # Snapshotting
 
-Record and verify the iOS button appearances.
+Record and verify the button appearances.
 
 ## Overview
 

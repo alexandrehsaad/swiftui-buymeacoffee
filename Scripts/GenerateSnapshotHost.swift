@@ -11,37 +11,37 @@ import Foundation
 // MARK: - GeneratedProject
 
 /// Serialized project contents and target identifiers needed to create its scheme.
-private struct GeneratedProject {
+fileprivate struct GeneratedProject {
     /// Complete XML property list for the generated Xcode project.
-    let data: Data
+    fileprivate let data: Data
 
     /// Project identifier of the application target.
-    let applicationID: String
+    fileprivate let applicationID: String
 
     /// Project identifier of the hosted test target.
-    let testsID: String
+    fileprivate let testsID: String
 }
 
 // MARK: - ResolvedDependency
 
 /// SnapshotTesting's repository and exact commit from the package lockfile.
-private struct ResolvedDependency {
+fileprivate struct ResolvedDependency {
     /// Repository URL recorded by SwiftPM.
-    let location: String
+    fileprivate let location: String
 
     /// Resolved commit used by both the package and generated host.
-    let revision: String
+    fileprivate let revision: String
 }
 
 // MARK: - SnapshotHost
 
-/// Generates a disposable host application, project, and comparison scheme for iOS snapshots.
-private struct SnapshotHost {
+/// Generates a disposable host application, project, and comparison scheme for snapshots.
+fileprivate struct SnapshotHost {
     /// Repository containing the package manifest and original snapshot test sources.
-    let packageDirectory: URL
+    fileprivate let packageDirectory: URL
 
     /// Name shared by the generated test target and recorder filters.
-    let testName: String
+    fileprivate let testName: String
 
     /// File manager used to discover sources and write generated files.
     private let manager = FileManager.default
@@ -59,7 +59,7 @@ private struct SnapshotHost {
     /// Creates the host while preserving unchanged files for incremental builds.
     ///
     /// - Throws: Source discovery, dependency parsing, project serialization, or file-writing errors.
-    func generate() throws {
+    fileprivate func generate() throws {
         let sources = try testSources()
         let dependency = try resolvedDependency()
         let project = try SnapshotProjectBuilder().build(
@@ -82,7 +82,7 @@ private struct SnapshotHost {
     /// - Returns: Absolute source URLs, keeping snapshot paths anchored in the repository.
     /// - Throws: An error if the test directory cannot be read.
     private func testSources() throws -> [URL] {
-        // Directory containing the original iOS snapshot test sources.
+        // Directory containing the original snapshot test sources.
         let testDirectory = packageDirectory.appendingPathComponent("Tests/\(self.testName)")
 
         // Immediate Swift source files, sorted by path to make project generation deterministic.
@@ -109,11 +109,13 @@ private struct SnapshotHost {
             let revision = state["revision"] as? String
         else {
             throw NSError(
-                domain: "SnapshotHost", code: 1,
+                domain: "SnapshotHost",
+                code: 1,
                 userInfo: [
                     NSLocalizedDescriptionKey:
                         "Package.resolved must contain swift-snapshot-testing. Resolve package dependencies first."
-                ])
+                ]
+            )
         }
 
         return ResolvedDependency(location: location, revision: revision)
@@ -128,8 +130,10 @@ private struct SnapshotHost {
             Data(
                 ("import SwiftUI\n"
                     + "@main struct SnapshotHostApp: App { var body: some Scene { WindowGroup { Color.clear } } }\n")
-                    .utf8),
-            to: hostDirectory.appendingPathComponent("SnapshotHostApp.swift"))
+                    .utf8
+            ),
+            to: hostDirectory.appendingPathComponent("SnapshotHostApp.swift")
+        )
     }
 
     /// Creates the comparison scheme; recording is enabled separately in disposable test-run files.
@@ -195,7 +199,7 @@ private struct SnapshotHost {
 /// Owns Xcode's object graph while constructing one application and its hosted test target.
 ///
 /// A new builder is created for each generation so identifiers remain stable between runs.
-private final class SnapshotProjectBuilder {
+fileprivate final class SnapshotProjectBuilder {
     /// Project object table, keyed by the identifiers returned by `object(_:_:)`.
     private var objects: [String: Any] = [:]
 
@@ -230,8 +234,9 @@ private final class SnapshotProjectBuilder {
             "XCConfigurationList",
             [
                 "buildConfigurations": configs,
-                "defaultConfigurationIsVisible": "0", "defaultConfigurationName": "Debug",
-            ])
+                "defaultConfigurationIsVisible": "0", "defaultConfigurationName": "Debug"
+            ]
+        )
     }
 
     /// Creates a build phase that participates in ordinary builds.
@@ -246,7 +251,7 @@ private final class SnapshotProjectBuilder {
             [
                 "buildActionMask": "2147483647",
                 "files": files,
-                "runOnlyForDeploymentPostprocessing": "0",
+                "runOnlyForDeploymentPostprocessing": "0"
             ]
         )
     }
@@ -265,7 +270,7 @@ private final class SnapshotProjectBuilder {
         "ALWAYS_SEARCH_USER_PATHS": "NO",
         "ONLY_ACTIVE_ARCH": "YES",
         "TARGETED_DEVICE_FAMILY": "1,2",
-        "PRODUCT_NAME": "$(TARGET_NAME)",
+        "PRODUCT_NAME": "$(TARGET_NAME)"
     ]
 
     /// Creates configurations by applying target-specific overrides to the shared settings.
@@ -282,9 +287,10 @@ private final class SnapshotProjectBuilder {
     ///   - root: Absolute repository URL used by the local package reference.
     ///   - sources: Original snapshot test files in deterministic order.
     ///   - dependency: SnapshotTesting repository and revision from the package lockfile.
+    ///   - testName: Name of the hosted test target.
     /// - Returns: Serialized project data and the target identifiers required by its scheme.
     /// - Throws: Property-list serialization errors.
-    func build(
+    fileprivate func build(
         root: URL,
         sources: [URL],
         dependency: ResolvedDependency,
@@ -296,7 +302,7 @@ private final class SnapshotProjectBuilder {
             [
                 "path": "SnapshotHostApp.swift",
                 "sourceTree": "<group>",
-                "lastKnownFileType": "sourcecode.swift",
+                "lastKnownFileType": "sourcecode.swift"
             ]
         )
 
@@ -307,7 +313,7 @@ private final class SnapshotProjectBuilder {
                 [
                     "path": $0.path,
                     "sourceTree": "<absolute>",
-                    "lastKnownFileType": "sourcecode.swift",
+                    "lastKnownFileType": "sourcecode.swift"
                 ]
             )
         }
@@ -318,17 +324,17 @@ private final class SnapshotProjectBuilder {
             [
                 "path": "SnapshotHost.app",
                 "sourceTree": "BUILT_PRODUCTS_DIR",
-                "explicitFileType": "wrapper.application",
+                "explicitFileType": "wrapper.application"
             ]
         )
-        
+
         // Build-product reference for the hosted test bundle.
         let testProduct = object(
             "PBXFileReference",
             [
                 "path": "\(testName).xctest",
                 "sourceTree": "BUILT_PRODUCTS_DIR",
-                "explicitFileType": "wrapper.cfbundle",
+                "explicitFileType": "wrapper.cfbundle"
             ]
         )
 
@@ -338,7 +344,7 @@ private final class SnapshotProjectBuilder {
             [
                 "name": "Products",
                 "sourceTree": "<group>",
-                "children": [appProduct, testProduct],
+                "children": [appProduct, testProduct]
             ]
         )
 
@@ -347,7 +353,7 @@ private final class SnapshotProjectBuilder {
             "PBXGroup",
             [
                 "sourceTree": "<group>",
-                "children": [appSource] + testSources + [products],
+                "children": [appSource] + testSources + [products]
             ]
         )
 
@@ -361,8 +367,8 @@ private final class SnapshotProjectBuilder {
                 "repositoryURL": dependency.location,
                 "requirement": [
                     "kind": "revision",
-                    "revision": dependency.revision,
-                ],
+                    "revision": dependency.revision
+                ]
             ]
         )
 
@@ -370,7 +376,7 @@ private final class SnapshotProjectBuilder {
         let dependencies = [
             (package, "BuyMeACoffee"),
             (package, "BuyMeACoffeeSnapshotTesting"),
-            (snapshotPackage, "SnapshotTesting"),
+            (snapshotPackage, "SnapshotTesting")
         ].map {
             object("XCSwiftPackageProductDependency", ["package": $0.0, "productName": $0.1])
         }
@@ -386,15 +392,15 @@ private final class SnapshotProjectBuilder {
                 "buildConfigurationList": settings([
                     "PRODUCT_BUNDLE_IDENTIFIER": "org.buymeacoffee.SnapshotHost",
                     "INFOPLIST_KEY_UIApplicationSceneManifest_Generation": "YES",
-                    "INFOPLIST_KEY_UILaunchScreen_Generation": "YES",
+                    "INFOPLIST_KEY_UILaunchScreen_Generation": "YES"
                 ]),
                 "buildPhases": [
                     phase("PBXSourcesBuildPhase", [object("PBXBuildFile", ["fileRef": appSource])]),
                     phase("PBXFrameworksBuildPhase"),
-                    phase("PBXResourcesBuildPhase"),
+                    phase("PBXResourcesBuildPhase")
                 ],
                 "buildRules": [],
-                "dependencies": [],
+                "dependencies": []
             ]
         )
 
@@ -410,16 +416,16 @@ private final class SnapshotProjectBuilder {
                     "PRODUCT_BUNDLE_IDENTIFIER": "org.buymeacoffee.\(testName)",
                     // These test sources belong to the local package and use its package-scoped helpers.
                     "OTHER_SWIFT_FLAGS": "$(inherited) -package-name swiftui_buymeacoffee",
-                    "TEST_HOST": "$(BUILT_PRODUCTS_DIR)/SnapshotHost.app/SnapshotHost", "BUNDLE_LOADER": "$(TEST_HOST)",
+                    "TEST_HOST": "$(BUILT_PRODUCTS_DIR)/SnapshotHost.app/SnapshotHost", "BUNDLE_LOADER": "$(TEST_HOST)"
                 ]),
                 "buildPhases": [
                     phase("PBXSourcesBuildPhase", testSources.map { object("PBXBuildFile", ["fileRef": $0]) }),
                     phase("PBXFrameworksBuildPhase", dependencies.map { object("PBXBuildFile", ["productRef": $0]) }),
-                    phase("PBXResourcesBuildPhase"),
+                    phase("PBXResourcesBuildPhase")
                 ],
                 "buildRules": [],
                 "dependencies": [object("PBXTargetDependency", ["target": app])],
-                "packageProductDependencies": dependencies,
+                "packageProductDependencies": dependencies
             ]
         )
 
@@ -437,7 +443,7 @@ private final class SnapshotProjectBuilder {
                 "projectRoot": "",
                 "targets": [app, tests],
                 "packageReferences": [package, snapshotPackage],
-                "attributes": ["TargetAttributes": [tests: ["TestTargetID": app]]],
+                "attributes": ["TargetAttributes": [tests: ["TestTargetID": app]]]
             ]
         )
 
@@ -448,12 +454,12 @@ private final class SnapshotProjectBuilder {
                 "objectVersion": "56",
                 "classes": [:],
                 "objects": objects,
-                "rootObject": projectID,
+                "rootObject": projectID
             ],
             format: .xml,
             options: 0
         )
-        
+
         return GeneratedProject(data: data, applicationID: app, testsID: tests)
     }
 }

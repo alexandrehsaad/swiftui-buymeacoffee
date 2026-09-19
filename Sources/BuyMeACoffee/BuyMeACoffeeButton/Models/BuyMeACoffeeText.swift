@@ -20,7 +20,6 @@ internal enum BuyMeACoffeeText: String {
     internal func localizedString(locale: Locale) -> String {
         return String(localized: .init(self.rawValue), bundle: .module, locale: locale)
     }
-
 }
 
 // MARK: - Equatable

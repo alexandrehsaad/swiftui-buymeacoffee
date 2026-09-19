@@ -64,11 +64,13 @@ fileprivate struct RecordingArguments {
                 self.destination = value
             case "--filter":
                 let components: Array<Substring> = value.split(separator: "/", omittingEmptySubsequences: false)
-                guard (1...2).contains(components.count), components.allSatisfy({ component in
-                    !component.isEmpty && component.allSatisfy({
-                        $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "_")
+                guard (1 ... 2).contains(components.count),
+                    components.allSatisfy({ component in
+                        !component.isEmpty
+                            && component.allSatisfy({
+                                $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "_")
+                            })
                     })
-                })
                 else {
                     throw RecordingError(
                         description: "Use a test function or SuiteName/testFunction, without parentheses."
@@ -251,15 +253,16 @@ fileprivate struct SnapshotRecorder {
                 $0.contains("error:")
             }
             let detail: String = errors.suffix(4).joined(separator: "\n")
-            throw RecordingError(description: """
-                The iOS snapshot host could not build.
-                \(detail)
+            throw RecordingError(
+                description: """
+                    The iOS snapshot host could not build.
+                    \(detail)
 
-                If launched from Xcode's package-command menu, the plugin is sandboxed and cannot run this recorder.
-                Use the Terminal plugin with --disable-sandbox.
-                For automatic recording and verification, use the Terminal command documented in Docs/Snapshotting.md.
-                Full build log: \(buildLogURL.path)
-                """
+                    If launched from Xcode's package-command menu, the plugin is sandboxed and cannot run this recorder.
+                    Use the Terminal plugin with --disable-sandbox.
+                    For automatic recording and verification, use the Terminal command documented in Docs/Snapshotting.md.
+                    Full build log: \(buildLogURL.path)
+                    """
             )
         }
 
@@ -307,8 +310,9 @@ fileprivate struct SnapshotRecorder {
             testCount == failedTestCount + passedTestCount,
             failures.count == failedTestCount
         else {
-            throw RecordingError(description:
-                "Recording did not execute the expected snapshot tests. Check the filter and \(recordResultURL.path)"
+            throw RecordingError(
+                description:
+                    "Recording did not execute the expected snapshot tests. Check the filter and \(recordResultURL.path)"
             )
         }
 
@@ -486,9 +490,10 @@ do {
                 testTargetName: repositoryTarget
             ).run()
         } else {
-            let targetName: String = ["RepositorySnapshotTests/", "TutorialSnapshotTests/"].contains {
-                arguments.filter?.hasPrefix($0) == true
-            }
+            let targetName: String =
+                ["RepositorySnapshotTests/", "TutorialSnapshotTests/"].contains {
+                    arguments.filter?.hasPrefix($0) == true
+                }
                 ? repositoryTarget
                 : comparisonTarget
             try SnapshotRecorder(

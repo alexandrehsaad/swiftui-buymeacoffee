@@ -6,7 +6,8 @@ let package = Package(
     name: "swiftui-buymeacoffee",
     defaultLocalization: "en",
     platforms: [
-        .iOS(.v15)
+        .iOS(.v15),
+        .macOS(.v13)
     ],
     products: [
         .library(
@@ -28,19 +29,38 @@ let package = Package(
         .package(
             url: "https://github.com/swiftlang/swift-docc-plugin.git",
             from: "1.5.0"
+        ),
+        .package(
+            url: "https://github.com/swiftlang/swift-format.git",
+            from: "603.0.0"
         )
     ],
     targets: [
+        .plugin(
+            name: "BuyMeACoffeeLinterPlugin",
+            capability: .command(
+                intent: .custom(
+                    verb: "lint",
+                    description: "Lint all Swift source files"
+                )
+            ),
+            dependencies: [
+                .product(
+                    name: "swift-format",
+                    package: "swift-format"
+                )
+            ]
+        ),
         .plugin(
             name: "BuyMeACoffeeSnapshotsPlugin",
             capability: .command(
                 intent: .custom(
                     verb: "record-snapshots",
-                    description: "Re-record and verify the Buy Me a Coffee iOS snapshots"
+                    description: "Re-record and verify the snapshots"
                 ),
                 permissions: [
                     .writeToPackageDirectory(
-                        reason: "Replace the iOS snapshot reference images"
+                        reason: "Replace the snapshot reference images"
                     ),
                     .allowNetworkConnections(
                         scope: .all(),
