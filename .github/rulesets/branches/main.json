@@ -48,13 +48,13 @@
         "do_not_enforce_on_create": true,
         "required_status_checks": [
           {
-              "context": "Build and Test iOS"
+            "context": "Run Unit Tests (iOS)"
           },
           {
             "context": "Lint Source Formatting"
           },
           {
-              "context": "Test iOS Snapshots"
+            "context": "Run Snapshot Tests (iOS)"
           },
           {
             "context": "Validate Branch Route"
