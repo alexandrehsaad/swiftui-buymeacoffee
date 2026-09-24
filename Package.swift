@@ -64,7 +64,7 @@ let package = Package(
                     ),
                     .allowNetworkConnections(
                         scope: .all(),
-                        reason: "Resolve the snapshot host's Swift package dependencies"
+                        reason: "Resolve the test host's Swift package dependencies"
                     )
                 ]
             )
@@ -86,7 +86,7 @@ let package = Package(
             ]
         ),
         .testTarget(
-            name: "BuyMeACoffeeTests",
+            name: "BuyMeACoffeeUnitTests",
             dependencies: [
                 "BuyMeACoffee"
             ]

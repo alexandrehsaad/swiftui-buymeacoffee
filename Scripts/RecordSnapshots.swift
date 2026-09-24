@@ -209,9 +209,9 @@ fileprivate struct SnapshotRecorder {
         reportProgress("Snapshot destination: \(self.arguments.destination)")
         reportProgress("Logs and results: \(runURL.path)")
 
-        reportProgress("Generating the iOS snapshot host…")
+        reportProgress("Generating the iOS test host…")
         var generationArguments: Array<String> = [
-            "swift", self.packageURL.appendingPathComponent("Scripts/GenerateSnapshotHost.swift").path
+            "swift", self.packageURL.appendingPathComponent("Scripts/GenerateTestHost.swift").path
         ]
         if self.testTargetName == "RepositorySnapshotTests" {
             generationArguments.append("--repository-snapshots")
@@ -222,7 +222,7 @@ fileprivate struct SnapshotRecorder {
             logURL: runURL.appendingPathComponent("generate.log")
         )
         guard generationStatus == 0 else {
-            throw RecordingError(description: "Could not generate the snapshot host. See \(runURL.path)/generate.log")
+            throw RecordingError(description: "Could not generate the test host. See \(runURL.path)/generate.log")
         }
 
         // The generated project can change its package-product references between runs. Reusing Xcode's
@@ -231,14 +231,14 @@ fileprivate struct SnapshotRecorder {
             try manager.removeItem(at: buildURL)
         }
 
-        let projectURL = workURL.appendingPathComponent("Host/SnapshotHost.xcodeproj")
+        let projectURL = self.packageURL.appendingPathComponent(".build/tests/Host/TestHost.xcodeproj")
         let buildLogURL: URL = runURL.appendingPathComponent("build.log")
-        reportProgress("Building the iOS snapshot host…")
+        reportProgress("Building the iOS test host…")
         let buildStatus: Int32 = try ProcessRunner.run(
             arguments: [
                 "xcodebuild", "build-for-testing",
                 "-project", projectURL.path,
-                "-scheme", "SnapshotHost",
+                "-scheme", "TestHost",
                 "-destination", self.arguments.destination,
                 "-derivedDataPath", buildURL.path,
                 "-clonedSourcePackagesDirPath", workURL.appendingPathComponent("PackageCache").path,
@@ -255,7 +255,7 @@ fileprivate struct SnapshotRecorder {
             let detail: String = errors.suffix(4).joined(separator: "\n")
             throw RecordingError(
                 description: """
-                    The iOS snapshot host could not build.
+                    The iOS test host could not build.
                     \(detail)
 
                     If launched from Xcode's package-command menu, the plugin is sandboxed and cannot run this recorder.
@@ -270,7 +270,7 @@ fileprivate struct SnapshotRecorder {
         let plans: Array<URL> = try manager.contentsOfDirectory(
             at: productsURL,
             includingPropertiesForKeys: [.contentModificationDateKey]
-        ).filter { $0.lastPathComponent.hasPrefix("SnapshotHost_") && $0.pathExtension == "xctestrun" }
+        ).filter { $0.lastPathComponent.hasPrefix("TestHost_") && $0.pathExtension == "xctestrun" }
         // Cached builds can retain configurations for other architectures or SDK versions.
         let planURL: URL? = try plans.sorted {
             let first: Date =

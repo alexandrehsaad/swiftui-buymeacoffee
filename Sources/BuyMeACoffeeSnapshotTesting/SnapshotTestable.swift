@@ -29,7 +29,8 @@ extension SnapshotTestable {
     ///   - line: The source line to report when an assertion fails.
     ///   - column: The source column to report when an assertion fails.
     ///   - accessibilityContrast: The accessibility contrast applied to the snapshot.
-    ///   - backgroundColor: The background to capture. Defaults to white in light mode and black in dark mode; use `.clear` for transparency.
+    ///   - backgroundColor: The background to capture. Defaults to white in light mode and black in dark mode; use
+    ///     `.clear` for transparency.
     ///   - colorScheme: The light or dark appearance applied to the view.
     ///   - content: The view to snapshot.
     @available(iOS 16.4, *)

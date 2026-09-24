@@ -20,6 +20,22 @@ fileprivate struct GeneratedProject {
 
     /// Project identifier of the hosted test target.
     fileprivate let testsID: String
+
+    /// Creates the serialized project and the identifiers used by its shared scheme.
+    ///
+    /// - Parameters:
+    ///   - data: Complete XML property list for the generated Xcode project.
+    ///   - applicationID: Project identifier of the host application target.
+    ///   - testsID: Project identifier of the hosted test target.
+    fileprivate init(
+        data: Data,
+        applicationID: String,
+        testsID: String
+    ) {
+        self.data = data
+        self.applicationID = applicationID
+        self.testsID = testsID
+    }
 }
 
 // MARK: - ResolvedDependency
@@ -31,13 +47,26 @@ fileprivate struct ResolvedDependency {
 
     /// Resolved commit used by both the package and generated host.
     fileprivate let revision: String
+
+    /// Creates a dependency reference from the package lockfile.
+    ///
+    /// - Parameters:
+    ///   - location: The dependency's repository URL.
+    ///   - revision: The exact Git commit to use in the generated project.
+    fileprivate init(
+        location: String,
+        revision: String
+    ) {
+        self.location = location
+        self.revision = revision
+    }
 }
 
-// MARK: - SnapshotHost
+// MARK: - TestHost
 
-/// Generates a disposable host application, project, and comparison scheme for snapshots.
-fileprivate struct SnapshotHost {
-    /// Repository containing the package manifest and original snapshot test sources.
+/// Generates a disposable host application, project, and scheme for unit tests and snapshot tests.
+fileprivate struct TestHost {
+    /// Repository containing the package manifest and original test sources.
     fileprivate let packageDirectory: URL
 
     /// Name shared by the generated test target and recorder filters.
@@ -46,14 +75,27 @@ fileprivate struct SnapshotHost {
     /// File manager used to discover sources and write generated files.
     private let manager = FileManager.default
 
+    /// Creates a generator for the selected test target in the package.
+    ///
+    /// - Parameters:
+    ///   - packageDirectory: The repository containing the manifest, lockfile, and original test sources.
+    ///   - testName: The test target name, also used to locate its directory beneath `Tests`.
+    fileprivate init(
+        packageDirectory: URL,
+        testName: String
+    ) {
+        self.packageDirectory = packageDirectory
+        self.testName = testName
+    }
+
     /// Disposable directory containing the application source and project.
     private var hostDirectory: URL {
-        packageDirectory.appendingPathComponent(".build/snapshots/Host")
+        return packageDirectory.appendingPathComponent(".build/tests/Host")
     }
 
     /// Xcode project consumed by the recording script and CI.
     private var projectDirectory: URL {
-        hostDirectory.appendingPathComponent("SnapshotHost.xcodeproj")
+        return hostDirectory.appendingPathComponent("TestHost.xcodeproj")
     }
 
     /// Creates the host while preserving unchanged files for incremental builds.
@@ -72,9 +114,9 @@ fileprivate struct SnapshotHost {
         try writeApplication()
         try write(
             comparisonScheme(for: project),
-            to: projectDirectory.appendingPathComponent("xcshareddata/xcschemes/SnapshotHost.xcscheme")
+            to: projectDirectory.appendingPathComponent("xcshareddata/xcschemes/TestHost.xcscheme")
         )
-        print("Generated snapshot host: \(projectDirectory.path)")
+        print("Generated test host: \(projectDirectory.path)")
     }
 
     /// Finds immediate Swift test files in stable path order without copying their contents.
@@ -82,7 +124,7 @@ fileprivate struct SnapshotHost {
     /// - Returns: Absolute source URLs, keeping snapshot paths anchored in the repository.
     /// - Throws: An error if the test directory cannot be read.
     private func testSources() throws -> [URL] {
-        // Directory containing the original snapshot test sources.
+        // Directory containing the original test sources.
         let testDirectory = packageDirectory.appendingPathComponent("Tests/\(self.testName)")
 
         // Immediate Swift source files, sorted by path to make project generation deterministic.
@@ -109,7 +151,7 @@ fileprivate struct SnapshotHost {
             let revision = state["revision"] as? String
         else {
             throw NSError(
-                domain: "SnapshotHost",
+                domain: "TestHost",
                 code: 1,
                 userInfo: [
                     NSLocalizedDescriptionKey:
@@ -118,7 +160,10 @@ fileprivate struct SnapshotHost {
             )
         }
 
-        return ResolvedDependency(location: location, revision: revision)
+        return ResolvedDependency(
+            location: location,
+            revision: revision
+        )
     }
 
     /// Writes the minimal SwiftUI application that supplies a window for glass rendering.
@@ -129,10 +174,10 @@ fileprivate struct SnapshotHost {
         try write(
             Data(
                 ("import SwiftUI\n"
-                    + "@main struct SnapshotHostApp: App { var body: some Scene { WindowGroup { Color.clear } } }\n")
+                    + "@main struct TestHostApp: App { var body: some Scene { WindowGroup { Color.clear } } }\n")
                     .utf8
             ),
-            to: hostDirectory.appendingPathComponent("SnapshotHostApp.swift")
+            to: hostDirectory.appendingPathComponent("TestHostApp.swift")
         )
     }
 
@@ -142,9 +187,9 @@ fileprivate struct SnapshotHost {
     /// - Returns: UTF-8 XML describing the shared scheme.
     private func comparisonScheme(for project: GeneratedProject) -> Data {
         // Scheme buildable reference identifying the host application target.
-        let appRef = reference(project.applicationID, "SnapshotHost", "SnapshotHost.app")
+        let appRef = reference(project.applicationID, "TestHost", "TestHost.app")
 
-        // Scheme buildable reference identifying the snapshot test target.
+        // Scheme buildable reference identifying the selected test target.
         let testRef = reference(project.testsID, self.testName, "\(self.testName).xctest")
 
         // Shared comparison-only scheme; the recorder enables recording in disposable test-run configurations.
@@ -177,9 +222,9 @@ fileprivate struct SnapshotHost {
     ///   - product: Build-product filename, including its bundle extension.
     /// - Returns: An XML buildable reference for use in the scheme.
     private func reference(_ id: String, _ name: String, _ product: String) -> String {
-        "<BuildableReference BuildableIdentifier=\"primary\" BlueprintIdentifier=\"\(id)\""
+        return "<BuildableReference BuildableIdentifier=\"primary\" BlueprintIdentifier=\"\(id)\""
             + " BuildableName=\"\(product)\" BlueprintName=\"\(name)\""
-            + " ReferencedContainer=\"container:SnapshotHost.xcodeproj\"/>"
+            + " ReferencedContainer=\"container:TestHost.xcodeproj\"/>"
     }
 
     /// Writes a generated file only when its contents differ, preserving incremental build inputs.
@@ -206,6 +251,11 @@ fileprivate final class SnapshotProjectBuilder {
     /// Counter used to assign stable identifiers when objects are created in the same order.
     private var nextID = 0
 
+    /// Creates an empty project builder with its identifier counter starting at zero.
+    ///
+    /// Use a fresh builder for each project so object identifiers remain deterministic across generations.
+    fileprivate init() {}
+
     /// Adds a typed object to the project table and returns its generated identifier.
     ///
     /// - Parameters:
@@ -219,7 +269,7 @@ fileprivate final class SnapshotProjectBuilder {
         return id
     }
 
-    /// Creates Debug and Release configurations with identical settings for snapshot builds.
+    /// Creates Debug and Release configurations with identical settings for hosted test builds.
     ///
     /// - Parameter settings: Build settings applied to both configurations.
     /// - Returns: The identifier of a configuration list whose default is Debug.
@@ -278,14 +328,14 @@ fileprivate final class SnapshotProjectBuilder {
     /// - Parameter extra: Settings that replace matching shared values or add target-specific values.
     /// - Returns: The target's configuration list identifier.
     private func settings(_ extra: [String: Any]) -> String {
-        configurations(common.merging(extra) { _, new in new })
+        return configurations(common.merging(extra) { _, new in new })
     }
 
     /// Constructs the Xcode object graph and serializes it for the host writer.
     ///
     /// - Parameters:
     ///   - root: Absolute repository URL used by the local package reference.
-    ///   - sources: Original snapshot test files in deterministic order.
+    ///   - sources: Original test files in deterministic order.
     ///   - dependency: SnapshotTesting repository and revision from the package lockfile.
     ///   - testName: Name of the hosted test target.
     /// - Returns: Serialized project data and the target identifiers required by its scheme.
@@ -300,7 +350,7 @@ fileprivate final class SnapshotProjectBuilder {
         let appSource = object(
             "PBXFileReference",
             [
-                "path": "SnapshotHostApp.swift",
+                "path": "TestHostApp.swift",
                 "sourceTree": "<group>",
                 "lastKnownFileType": "sourcecode.swift"
             ]
@@ -322,7 +372,7 @@ fileprivate final class SnapshotProjectBuilder {
         let appProduct = object(
             "PBXFileReference",
             [
-                "path": "SnapshotHost.app",
+                "path": "TestHost.app",
                 "sourceTree": "BUILT_PRODUCTS_DIR",
                 "explicitFileType": "wrapper.application"
             ]
@@ -385,12 +435,12 @@ fileprivate final class SnapshotProjectBuilder {
         let app = object(
             "PBXNativeTarget",
             [
-                "name": "SnapshotHost",
-                "productName": "SnapshotHost",
+                "name": "TestHost",
+                "productName": "TestHost",
                 "productType": "com.apple.product-type.application",
                 "productReference": appProduct,
                 "buildConfigurationList": settings([
-                    "PRODUCT_BUNDLE_IDENTIFIER": "org.buymeacoffee.SnapshotHost",
+                    "PRODUCT_BUNDLE_IDENTIFIER": "org.buymeacoffee.TestHost",
                     "INFOPLIST_KEY_UIApplicationSceneManifest_Generation": "YES",
                     "INFOPLIST_KEY_UILaunchScreen_Generation": "YES"
                 ]),
@@ -416,7 +466,7 @@ fileprivate final class SnapshotProjectBuilder {
                     "PRODUCT_BUNDLE_IDENTIFIER": "org.buymeacoffee.\(testName)",
                     // These test sources belong to the local package and use its package-scoped helpers.
                     "OTHER_SWIFT_FLAGS": "$(inherited) -package-name swiftui_buymeacoffee",
-                    "TEST_HOST": "$(BUILT_PRODUCTS_DIR)/SnapshotHost.app/SnapshotHost", "BUNDLE_LOADER": "$(TEST_HOST)"
+                    "TEST_HOST": "$(BUILT_PRODUCTS_DIR)/TestHost.app/TestHost", "BUNDLE_LOADER": "$(TEST_HOST)"
                 ]),
                 "buildPhases": [
                     phase("PBXSourcesBuildPhase", testSources.map { object("PBXBuildFile", ["fileRef": $0]) }),
@@ -460,33 +510,49 @@ fileprivate final class SnapshotProjectBuilder {
             options: 0
         )
 
-        return GeneratedProject(data: data, applicationID: app, testsID: tests)
+        return GeneratedProject(
+            data: data,
+            applicationID: app,
+            testsID: tests
+        )
     }
 }
 
 // MARK: - Generation
 
-// Resolve paths from the script so the caller's working directory does not affect generation.
-let arguments: Array<String> = Array(CommandLine.arguments.dropFirst())
-let testName: String
-switch arguments {
-case []:
-    testName = "BuyMeACoffeeSnapshotTests"
-case ["--repository-snapshots"]:
-    testName = "RepositorySnapshotTests"
-case ["--unit-tests"]:
-    testName = "BuyMeACoffeeTests"
-default:
-    throw NSError(
-        domain: "SnapshotHost",
-        code: 2,
-        userInfo: [
-            NSLocalizedDescriptionKey:
-                "Usage: swift Scripts/GenerateSnapshotHost.swift [--repository-snapshots|--unit-tests]"
-        ]
-    )
-}
-try SnapshotHost(
-    packageDirectory: URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent(),
+/// Command-line options following the script name, used to select the hosted test target.
+fileprivate let arguments: Array<String> = Array(CommandLine.arguments.dropFirst())
+
+/// The hosted test target selected by the command-line options.
+///
+/// Defaults to button snapshot tests. `--repository-snapshots` selects repository artwork tests, while `--unit-tests`
+/// selects unit tests. Unsupported arguments stop generation with a usage diagnostic.
+fileprivate let testName: String =
+    switch arguments {
+    case []:
+        return "BuyMeACoffeeSnapshotTests"
+    case ["--repository-snapshots"]:
+        return "RepositorySnapshotTests"
+    case ["--unit-tests"]:
+        return "BuyMeACoffeeUnitTests"
+    default:
+        throw NSError(
+            domain: "TestHost",
+            code: 2,
+            userInfo: [
+                NSLocalizedDescriptionKey:
+                    "Usage: swift Scripts/GenerateTestHost.swift [--repository-snapshots|--unit-tests]"
+            ]
+        )
+    }
+
+/// The repository root, resolved relative to this script rather than the caller's working directory.
+fileprivate let packageDirectory: URL = .init(fileURLWithPath: #filePath)
+    .deletingLastPathComponent()
+    .deletingLastPathComponent()
+
+// Generate the selected host; propagate failures so callers receive a nonzero exit status.
+try TestHost(
+    packageDirectory: packageDirectory,
     testName: testName
 ).generate()

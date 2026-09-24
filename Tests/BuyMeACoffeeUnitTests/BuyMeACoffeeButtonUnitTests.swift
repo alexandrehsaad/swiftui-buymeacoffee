@@ -12,8 +12,8 @@ import Testing
 @testable import BuyMeACoffee
 
 @MainActor
-@Suite("BuyMeACoffeeButton Tests")
-internal struct BuyMeACoffeeButtonTests {
+@Suite("BuyMeACoffeeButton Unit Tests")
+internal struct BuyMeACoffeeButtonUnitTests {
     @Test("Creates a Buy Me a Coffee account URL")
     internal func createsAccountURL() {
         let url: URL = .buyMeACoffee(username: "myusername")
