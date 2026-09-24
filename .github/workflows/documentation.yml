@@ -29,24 +29,13 @@ jobs:
       - name: Get Swift Version
         run: swift --version
       - name: Build Documentation
-        run: |
-          xcodebuild docbuild \
-            -scheme BuyMeACoffee \
-            -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath .build/documentation \
-            CODE_SIGNING_ALLOWED=NO \
-            DOCC_HOSTING_BASE_PATH=swiftui-buymeacoffee
-          xcrun docc process-archive transform-for-static-hosting \
-            .build/documentation/Build/Products/Debug-iphonesimulator/BuyMeACoffee.doccarchive \
-            --output-path ./docs \
-            --hosting-base-path swiftui-buymeacoffee
-          echo '<meta http-equiv="refresh" content="0; url=documentation/buymeacoffee/">' > docs/index.html
+        run: xcrun swift Scripts/BuildDocumentation.swift
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: "docs"
+          path: ".build/github-pages"
       - name: Deploy Documentation
         id: deployment
         uses: actions/deploy-pages@v4
