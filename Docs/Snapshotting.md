@@ -119,7 +119,8 @@ The `Run Snapshot Tests (iOS)` job in the `Tests` workflow compares existing ref
 17 simulator running iOS 26.5. It runs on pushes to `main` and when pull requests targeting `main` or `release/**` are
 opened, reopened, or updated with commits. Superseded runs for the same branch or pull request are cancelled.
 
-CI runs `swift Scripts/GenerateTestHost.swift`, then invokes `xcodebuild test` directly without recording. See
+CI runs `swift Scripts/RunSnapshotTests.swift`, which generates the test host, compares snapshots without recording,
+and collects coverage after the tests succeed. See
 [Workflows](Workflows.md) for the shared local commands. Missing references and images outside the comparison tolerance
 fail the job. Download the `ios-snapshot-test-results` artifact and open `SnapshotTests.xcresult` in Xcode to inspect
 failures. Update references locally, review the differences, and commit them with the corresponding changes.

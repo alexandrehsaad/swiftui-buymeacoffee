@@ -505,5 +505,5 @@ do {
     }
 } catch {
     FileHandle.standardError.write(Data("Snapshot recording failed: \(error)\n".utf8))
-    exit(1)
+    exit(EXIT_FAILURE)
 }

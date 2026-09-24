@@ -1,0 +1,120 @@
+name: Tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main", "release/**"]
+    types: ["opened", "reopened", "synchronize"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: Run Unit Tests (iOS)
+    runs-on: macos-26
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.5.app/Contents/Developer
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+      - name: Get Xcode Version
+        run: xcodebuild -version
+      - name: Run Unit Tests (iOS)
+        run: xcrun swift Scripts/RunUnitTests.swift
+      - name: Upload Coverage Data
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-UnitTests
+          path: .build/coverage/UnitTests
+          overwrite: true
+          if-no-files-found: error
+      - name: Upload Unit Test Results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-unit-test-results
+          path: .build/snapshots/UnitTests.xcresult
+          overwrite: true
+          if-no-files-found: ignore
+          include-hidden-files: true
+
+  snapshot-tests:
+    name: Run Snapshot Tests (iOS)
+    runs-on: macos-26
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.5.app/Contents/Developer
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+      - name: Get Xcode Version
+        run: xcodebuild -version
+      - name: Run Snapshot Tests (iOS)
+        run: xcrun swift Scripts/RunSnapshotTests.swift
+      - name: Upload Coverage Data
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-SnapshotTests
+          path: .build/coverage/SnapshotTests
+          overwrite: true
+          if-no-files-found: error
+      - name: Upload Snapshot Test Results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-snapshot-test-results
+          path: .build/snapshots/SnapshotTests.xcresult
+          overwrite: true
+          if-no-files-found: ignore
+          include-hidden-files: true
+
+  coverage:
+    name: Code Coverage
+    needs: [unit-tests, snapshot-tests]
+    if: always()
+    runs-on: macos-26
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.5.app/Contents/Developer
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+      - name: Download Unit Test Coverage
+        if: needs.unit-tests.result == 'success'
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage-UnitTests
+          path: .build/coverage/UnitTests
+      - name: Download Snapshot Test Coverage
+        if: needs.snapshot-tests.result == 'success'
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage-SnapshotTests
+          path: .build/coverage/SnapshotTests
+      - name: Merge Available Coverage
+        env:
+          UNIT_TEST_RESULT: ${{ needs.unit-tests.result }}
+          SNAPSHOT_TEST_RESULT: ${{ needs.snapshot-tests.result }}
+        run: xcrun swift Scripts/CollectCodeCoverage.swift --merge .build/coverage
+      - name: Generate Code Coverage Report
+        shell: bash
+        run: |
+          report_directory=.build/coverage/Combined
+          cat "$report_directory/status.md" > "$report_directory/code-coverage.md"
+          if [[ -f "$report_directory/code-coverage.json" ]]; then
+            xcrun swift Scripts/GenerateCodeCoverageReport.swift \
+              --report "$report_directory/code-coverage.json" \
+              --sources "$GITHUB_WORKSPACE/Sources" >> "$report_directory/code-coverage.md"
+          fi
+          cat "$report_directory/code-coverage.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload Code Coverage Report
+        uses: actions/upload-artifact@v7
+        with:
+          name: code-coverage
+          path: .build/coverage/Combined
+          overwrite: true
+          if-no-files-found: error
