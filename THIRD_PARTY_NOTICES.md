@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-The [MIT License](LICENSE.md) applies to the original source code and documentation in this repository. It does not
+The [MIT License](/LICENSE.md) applies to the original source code and documentation in this repository. It does not
 replace or supersede the rights that apply to the third-party materials listed below.
 
 ## Buy Me a Coffee
@@ -24,5 +24,5 @@ the project's purpose and does not grant any rights in Buy Me a Coffee's tradema
 Copyright (c) 2011 by Ania Kruk (hello@aniakruk.com), with Reserved Font Name "Cookie".
 
 The bundled Cookie font is licensed under the SIL Open Font License, Version 1.1. It is not licensed under this
-project's MIT License. See the included [Cookie Font License](Sources/BuyMeACoffee/Resources/Cookie-OFL.md) for the 
+project's MIT License. See the included [Cookie Font License](/Sources/BuyMeACoffee/Resources/Cookie-OFL.md) for the
 complete terms.

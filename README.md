@@ -1,4 +1,4 @@
-![](Tests/RepositorySnapshotTests/__Snapshots__/RepositorySnapshotTests/makeReadMeBanner.light.png)
+![](/Tests/RepositorySnapshotTests/__Snapshots__/RepositorySnapshotTests/makeReadMeBanner.light.png)
 
 # SwiftUI BuyMeACoffee
 
@@ -7,8 +7,7 @@ A Swift package for creating branded [Buy Me a Coffee](https://www.buymeacoffee.
 ## Overview
 
 BuyMeACoffee provides a branded SwiftUI button that opens a creator's Buy Me a Coffee page. It includes solid and
-Liquid Glass button styles, selectable tints, and an automatic contrasting border for light and dark
-interfaces.
+Liquid Glass button styles, selectable tints, and an automatic contrasting border for light and dark interfaces.
 
 The button works with standard SwiftUI label styles and button border shapes, supports Dynamic Type and accessibility
 settings, and displays the official Buy Me a Coffee logo alongside its matching icon.
@@ -85,7 +84,7 @@ The code above renders the button below. Click it to visit my Buy Me a Coffee pa
 
 <a href="https://www.buymeacoffee.com/alexandrehsaad">
     <img
-        src="Tests/RepositorySnapshotTests/__Snapshots__/RepositorySnapshotTests/makeReadMeButton.light.png"
+        src="/Tests/RepositorySnapshotTests/__Snapshots__/RepositorySnapshotTests/makeReadMeButton.light.png"
         alt="Buy me a coffee"
         height="72"
     >
@@ -98,19 +97,19 @@ You can read more about this package by visiting the
 
 ## Contributing
 
-Everyone is welcome to contribute to BuyMeACoffee. See [Contributing](CONTRIBUTING.md) for contribution guidelines, branch
-conventions, pull request expectations, and testing instructions.
+Everyone is welcome to contribute to BuyMeACoffee. See [Contributing](/CONTRIBUTING.md) for contribution guidelines,
+branch conventions, pull request expectations, and testing instructions.
 
-If you find a bug, please create an [issue](https://github.com/alexandrehsaad/swiftui-buymeacoffee/issues). Security 
-vulnerabilities should be reported using the instructions in the [security policy](SECURITY.md).
+If you find a bug, please create an [issue](https://github.com/alexandrehsaad/swiftui-buymeacoffee/issues). Security
+vulnerabilities should be reported using the instructions in the [Security Policy](/SECURITY.md).
 
 ## Code of Conduct
 
-This project follows a [code of conduct](CODE_OF_CONDUCT.md).
+This project follows a [Code of Conduct](/CODE_OF_CONDUCT.md).
 
 ## License
 
-Distributed under the [MIT License](LICENSE.md). See the [third-party notices](THIRD_PARTY_NOTICES.md) for materials
+Distributed under the [MIT License](/LICENSE.md). See the [Third-Party Notices](/THIRD_PARTY_NOTICES.md) for materials
 covered by separate terms.
 
 This is an independent, unofficial project and is not affiliated with, sponsored by, or endorsed by Buy Me a Coffee. The
