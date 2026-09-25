@@ -530,11 +530,11 @@ fileprivate let arguments: Array<String> = Array(CommandLine.arguments.dropFirst
 fileprivate let testName: String =
     switch arguments {
     case []:
-        return "BuyMeACoffeeSnapshotTests"
+        "BuyMeACoffeeSnapshotTests"
     case ["--repository-snapshots"]:
-        return "RepositorySnapshotTests"
+        "RepositorySnapshotTests"
     case ["--unit-tests"]:
-        return "BuyMeACoffeeUnitTests"
+        "BuyMeACoffeeUnitTests"
     default:
         throw NSError(
             domain: "TestHost",
