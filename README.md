@@ -97,8 +97,7 @@ You can read more about this package by visiting the
 
 ## Contributing
 
-Everyone is welcome to contribute to BuyMeACoffee. See [Contributing](/CONTRIBUTING.md) for contribution guidelines,
-branch conventions, pull request expectations, and testing instructions.
+Everyone is welcome to contribute to BuyMeACoffee. See the [Contributing](/CONTRIBUTING.md) guide to get started.
 
 If you find a bug, please create an [issue](https://github.com/alexandrehsaad/swiftui-buymeacoffee/issues). Security
 vulnerabilities should be reported using the instructions in the [Security Policy](/SECURITY.md).
