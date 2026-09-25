@@ -8,6 +8,77 @@
 
 import Foundation
 
+// MARK: - SnapshotTestRunnerError
+
+/// An error produced while validating inputs or running a command.
+fileprivate enum SnapshotTestRunnerError {
+    /// Unsupported command-line arguments were supplied.
+    case invalidArguments
+
+    /// A process could not be started.
+    ///
+    /// - Parameter underlyingError: The original process-launch error.
+    case launchFailed(underlyingError: any Error)
+
+    /// A command exited unsuccessfully.
+    ///
+    /// - Parameter status: The command's exit status.
+    case commandFailed(status: Int32)
+
+    /// A command was terminated by a signal.
+    ///
+    /// - Parameter signal: The terminating signal.
+    case commandInterrupted(signal: Int32)
+
+    /// The command-line status, preserving unsuccessful subprocess exit codes.
+    fileprivate var exitStatus: Int32 {
+        switch self {
+        case .commandFailed(let status):
+            return status
+        default:
+            return EXIT_FAILURE
+        }
+    }
+}
+
+// MARK: - CustomStringConvertible
+
+extension SnapshotTestRunnerError: CustomStringConvertible {
+    fileprivate var description: String {
+        switch self {
+        case .invalidArguments:
+            return "Usage: RunSnapshotTests.swift"
+        case .launchFailed(let underlyingError):
+            return "Could not start command: \(underlyingError)"
+        case .commandFailed(let status):
+            return "Command failed with exit status \(status)."
+        case .commandInterrupted(let signal):
+            return "Command was terminated by signal \(signal)."
+        }
+    }
+}
+
+// MARK: - Error
+
+extension SnapshotTestRunnerError: Error {}
+
+// MARK: - Arguments
+
+/// The command-line arguments accepted by the test runner.
+fileprivate struct Arguments {
+    /// Validates that no options were supplied.
+    ///
+    /// - Parameter arguments: Arguments following the script name.
+    /// - Throws: `SnapshotTestRunnerError.invalidArguments` if any options are supplied.
+    fileprivate init(_ arguments: Array<String>) throws(SnapshotTestRunnerError) {
+        guard arguments.isEmpty else {
+            throw SnapshotTestRunnerError.invalidArguments
+        }
+    }
+}
+
+// MARK: - SnapshotTestRunner
+
 /// Runs snapshot tests and collects coverage artifacts for local use and continuous integration.
 fileprivate struct SnapshotTestRunner {
     /// Creates a snapshot tests runner.
@@ -20,13 +91,8 @@ fileprivate struct SnapshotTestRunner {
     /// Subprocess failures terminate the script with the same exit status; signals result in a failure status.
     /// Coverage is collected only after the tests succeed and can then be merged with the other suite's coverage.
     ///
-    /// - Throws: An error if a subprocess cannot be launched.
-    fileprivate func run() throws {
-        guard CommandLine.arguments.count == 1 else {
-            FileHandle.standardError.write(Data("Usage: RunSnapshotTests.swift\n".utf8))
-            exit(EXIT_FAILURE)
-        }
-
+    /// - Throws: `SnapshotTestRunnerError` if a subprocess cannot start or complete successfully.
+    fileprivate func run() throws(SnapshotTestRunnerError) {
         try self.runXcrun(arguments: ["swift", "Scripts/GenerateTestHost.swift"])
 
         try self.runXcrun(arguments: [
@@ -47,25 +113,37 @@ fileprivate struct SnapshotTestRunner {
     /// Runs a command using the selected Xcode toolchain, forwarding its output to standard error.
     ///
     /// - Parameter arguments: The tool name and arguments passed to `xcrun`.
-    /// - Throws: An error if the process cannot be launched.
-    private func runXcrun(arguments: Array<String>) throws {
+    /// - Throws: `SnapshotTestRunnerError` if the process cannot start or complete successfully.
+    private func runXcrun(arguments: Array<String>) throws(SnapshotTestRunnerError) {
         let process: Process = .init()
         process.executableURL = .init(fileURLWithPath: "/usr/bin/env")
         process.arguments = ["xcrun"] + arguments
         process.standardOutput = FileHandle.standardError
 
-        try process.run()
+        do {
+            try process.run()
+        } catch let error {
+            throw SnapshotTestRunnerError.launchFailed(underlyingError: error)
+        }
+
         process.waitUntilExit()
 
-        guard process.terminationReason == .exit && process.terminationStatus == EXIT_SUCCESS else {
-            exit(process.terminationReason == .exit ? process.terminationStatus : EXIT_FAILURE)
+        guard process.terminationReason == .exit else {
+            throw SnapshotTestRunnerError.commandInterrupted(signal: process.terminationStatus)
+        }
+        guard process.terminationStatus == EXIT_SUCCESS else {
+            throw SnapshotTestRunnerError.commandFailed(status: process.terminationStatus)
         }
     }
 }
 
-do {
-    try SnapshotTestRunner().run()
+// MARK: - Test Execution
+
+do throws(SnapshotTestRunnerError) {
+    let _: Arguments = try .init(Array(CommandLine.arguments.dropFirst()))
+    let runner: SnapshotTestRunner = .init()
+    try runner.run()
 } catch let error {
     FileHandle.standardError.write(Data("\(error)\n".utf8))
-    exit(EXIT_FAILURE)
+    exit(error.exitStatus)
 }

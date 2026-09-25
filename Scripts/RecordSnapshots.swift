@@ -10,31 +10,126 @@ import Foundation
 
 // MARK: - RecordingError
 
-/// A diagnostic from the recording script.
-fileprivate struct RecordingError: Error, CustomStringConvertible {
-    /// Human-readable failure details, including a diagnostic log path when available.
-    fileprivate let description: String
+/// An error produced while recording or verifying snapshots.
+fileprivate enum RecordingError {
+    /// The command-line options are invalid.
+    ///
+    /// - Parameter message: The usage or invalid-option diagnostic.
+    case invalidArguments(message: String)
+
+    /// An Xcode command was interrupted.
+    ///
+    /// - Parameter logPath: The command log to inspect.
+    case commandInterrupted(logPath: String)
+
+    /// The result tool did not succeed.
+    ///
+    /// - Parameter status: The result tool exit status.
+    case resultCommandFailed(status: Int32)
+
+    /// The test host could not be generated.
+    ///
+    /// - Parameter logPath: The host-generation log.
+    case hostGenerationFailed(logPath: String)
+
+    /// The generated test host could not be built.
+    ///
+    /// - Parameter message: The build diagnostics and log location.
+    case hostBuildFailed(message: String)
+
+    /// The build produced no test-run configuration.
+    ///
+    /// - Parameter logPath: The build log to inspect.
+    case missingTestPlan(logPath: String)
+
+    /// Recording did not execute the expected tests.
+    ///
+    /// - Parameter path: The recording result bundle.
+    case unexpectedRecordingResults(path: String)
+
+    /// A failed test has no recognized identifier.
+    ///
+    /// - Parameter path: The recording result bundle.
+    case unrecognizedTestFailure(path: String)
+
+    /// Recording encountered a failure other than an expected recording assertion.
+    ///
+    /// - Parameters:
+    ///   - identifier: The failing test identifier.
+    ///   - path: The recording result bundle.
+    case testFailure(
+        identifier: String,
+        path: String
+    )
+
+    /// The recorded snapshots did not pass verification.
+    ///
+    /// - Parameter path: The verification result bundle.
+    case verificationFailed(path: String)
+
+    /// A test plan does not contain exactly one target.
+    ///
+    /// - Parameter count: The number of targets found in the test plan.
+    case invalidTargetCount(count: Int)
+
+    /// The result tool returned a non-object summary.
+    case invalidResultSummary
+
+    /// A recording file, process, or structured result could not be processed.
+    ///
+    /// - Parameter underlyingError: The original file-system, serialization, or process error.
+    case operationFailed(underlyingError: any Error)
 }
 
-// MARK: - RecordingArguments
+// MARK: - CustomStringConvertible
+
+extension RecordingError: CustomStringConvertible {
+    fileprivate var description: String {
+        switch self {
+        case .invalidArguments(let message):
+            return message
+        case .commandInterrupted(let logPath):
+            return "Xcode was interrupted. See \(logPath)"
+        case .resultCommandFailed(let status):
+            return "Could not read the Xcode test results (status \(status))."
+        case .hostGenerationFailed(let logPath):
+            return "Could not generate the test host. See \(logPath)"
+        case .hostBuildFailed(let message):
+            return message
+        case .missingTestPlan(let logPath):
+            return "Xcode produced no test-run configuration. See \(logPath)"
+        case .unexpectedRecordingResults(let path):
+            return "Recording did not execute the expected snapshot tests. Check the filter and \(path)"
+        case .unrecognizedTestFailure(let path):
+            return "Xcode returned an unrecognized test failure. See \(path)"
+        case .testFailure(let identifier, let path):
+            return "Recording encountered a real test failure in \(identifier). See \(path)"
+        case .verificationFailed(let path):
+            return "The new references did not pass verification. See \(path)"
+        case .invalidTargetCount(let count):
+            return "Expected one iOS snapshot target, found \(count)."
+        case .invalidResultSummary:
+            return "Xcode returned an invalid result summary."
+        case .operationFailed(let underlyingError):
+            return "Could not complete snapshot recording: \(underlyingError)"
+        }
+    }
+}
+
+// MARK: - Error
+
+extension RecordingError: Error {}
+
+// MARK: - Arguments
 
 /// Options accepted by both the standalone script and the command plugin.
-fileprivate struct RecordingArguments {
-    /// Command syntax, default destination, and requirements shown by the help option.
-    fileprivate static let usage: String = """
-        Usage: swift Scripts/RecordSnapshots.swift [--destination <destination>] [--filter <test-filter>]
-        Re-records the iOS snapshots, then verifies the new references with recording disabled.
-        Default destination: platform=iOS Simulator,name=iPhone 17,OS=26.5
-        Example filter: testButtonStyles
-        Repository asset: RepositorySnapshotTests/makeReadMeBanner
-        Requires Xcode 26 or later and an installed iOS 26 or later simulator runtime.
-        Use --help to display this message without building or recording.
-        """
-
+fileprivate struct Arguments {
     /// Xcode simulator destination used for both recording and verification.
     fileprivate var destination: String = "platform=iOS Simulator,name=iPhone 17,OS=26.5"
+
     /// Optional test function or suite-qualified test function; `nil` runs every snapshot suite.
     fileprivate var filter: String?
+
     /// Whether to print usage information without generating, building, or running tests.
     fileprivate var showsHelp: Bool = false
 
@@ -42,7 +137,7 @@ fileprivate struct RecordingArguments {
     ///
     /// - Parameter arguments: Command-line arguments excluding the executable name.
     /// - Throws: `RecordingError` for unknown, duplicate, incomplete, or invalid options.
-    fileprivate init(_ arguments: Array<String>) throws {
+    fileprivate init(_ arguments: Array<String>) throws(RecordingError) {
         if arguments == ["--help"] || arguments == ["-h"] {
             self.showsHelp = true
             return
@@ -53,13 +148,13 @@ fileprivate struct RecordingArguments {
         while index < arguments.count {
             let option: String = arguments[index]
             guard index + 1 < arguments.count, seen.insert(option).inserted else {
-                throw RecordingError(description: Self.usage)
+                throw RecordingError.invalidArguments(message: Self.usage)
             }
             let value: String = arguments[index + 1]
             switch option {
             case "--destination":
                 guard value.split(separator: ",").contains("platform=iOS Simulator") else {
-                    throw RecordingError(description: "Only an iOS Simulator destination is supported.")
+                    throw RecordingError.invalidArguments(message: "Only an iOS Simulator destination is supported.")
                 }
                 self.destination = value
             case "--filter":
@@ -72,32 +167,43 @@ fileprivate struct RecordingArguments {
                             })
                     })
                 else {
-                    throw RecordingError(
-                        description: "Use a test function or SuiteName/testFunction, without parentheses."
+                    throw RecordingError.invalidArguments(
+                        message: "Use a test function or SuiteName/testFunction, without parentheses."
                     )
                 }
                 self.filter = value
             default:
-                throw RecordingError(description: "Unknown option: \(option)\n\(Self.usage)")
+                throw RecordingError.invalidArguments(message: "Unknown option: \(option)\n\(Self.usage)")
             }
             index += 2
         }
     }
-}
 
-/// Writes a progress line directly to standard error without Swift's standard-output buffering.
-///
-/// The invoking process may still buffer or group the output before displaying it.
-///
-/// - Parameter message: Status text to emit with a trailing newline.
-fileprivate func reportProgress(_ message: String) {
-    FileHandle.standardError.write(Data((message + "\n").utf8))
+    /// Command syntax, default destination, and requirements shown by the help option.
+    fileprivate static let usage: String = """
+        Usage: swift Scripts/RecordSnapshots.swift [--destination <destination>] [--filter <test-filter>]
+        Re-records the iOS snapshots, then verifies the new references with recording disabled.
+        Default destination: platform=iOS Simulator,name=iPhone 17,OS=26.5
+        Example filter: testButtonStyles
+        Repository asset: RepositorySnapshotTests/makeReadMeBanner
+        Requires Xcode 26 or later and an installed iOS 26 or later simulator runtime.
+        Use --help to display this message without building or recording.
+        """
 }
 
 // MARK: - ProcessRunner
 
 /// Runs Xcode tools with argument arrays, preserving their output in a log or capturing structured data.
 fileprivate enum ProcessRunner {
+    /// Writes a progress line directly to standard error without Swift's standard-output buffering.
+    ///
+    /// The invoking process may still buffer or group the output before displaying it.
+    ///
+    /// - Parameter message: Status text to emit with a trailing newline.
+    fileprivate static func reportProgress(_ message: String) {
+        FileHandle.standardError.write(Data((message + "\n").utf8))
+    }
+
     /// Runs a tool synchronously, saving its combined output and reporting elapsed time.
     ///
     /// - Parameters:
@@ -118,7 +224,7 @@ fileprivate enum ProcessRunner {
         let process: Process = Self.process(arguments: arguments, workingDirectoryURL: workingDirectoryURL)
         process.standardOutput = output
         process.standardError = output
-        reportProgress("Log: \(logURL.path)")
+        ProcessRunner.reportProgress("Log: \(logURL.path)")
         let started = Date()
         try process.run()
         var nextUpdate = 10
@@ -127,13 +233,13 @@ fileprivate enum ProcessRunner {
             let elapsed = Int(Date().timeIntervalSince(started))
             if elapsed >= nextUpdate {
                 let operation: String = logURL.deletingPathExtension().lastPathComponent
-                reportProgress("Still running \(operation)… \(elapsed)s elapsed")
+                ProcessRunner.reportProgress("Still running \(operation)… \(elapsed)s elapsed")
                 nextUpdate = elapsed + 10
             }
         }
         process.waitUntilExit()
         guard process.terminationReason == .exit else {
-            throw RecordingError(description: "Xcode was interrupted. See \(logURL.path)")
+            throw RecordingError.commandInterrupted(logPath: logURL.path)
         }
         return process.terminationStatus
     }
@@ -157,9 +263,7 @@ fileprivate enum ProcessRunner {
         let data: Data = pipe.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
         guard process.terminationReason == .exit && process.terminationStatus == 0 else {
-            throw RecordingError(
-                description: "Could not read the Xcode test results (status \(process.terminationStatus))."
-            )
+            throw RecordingError.resultCommandFailed(status: process.terminationStatus)
         }
         return data
     }
@@ -188,179 +292,211 @@ fileprivate enum ProcessRunner {
 fileprivate struct SnapshotRecorder {
     /// Repository root containing the scripts, package manifest, tests, and reference images.
     fileprivate let packageURL: URL
+
     /// Validated destination and optional test filter for this invocation.
-    fileprivate let arguments: RecordingArguments
+    fileprivate let arguments: Arguments
+
     /// Test target to generate, record, and verify.
     fileprivate let testTargetName: String
+
+    /// Creates a recorder for one test target.
+    ///
+    /// - Parameters:
+    ///   - packageURL: The repository containing the scripts and snapshot references.
+    ///   - arguments: The destination and optional test filter.
+    ///   - testTargetName: The generated test target to record and verify.
+    fileprivate init(
+        packageURL: URL,
+        arguments: Arguments,
+        testTargetName: String
+    ) {
+        self.packageURL = packageURL
+        self.arguments = arguments
+        self.testTargetName = testTargetName
+    }
 
     /// Generates the host, builds once, records references, and verifies the same tests.
     ///
     /// Logs and result bundles remain in a unique run directory. Disposable test configurations
     /// are removed on exit; reference images already written are retained even if verification fails.
     ///
-    /// - Throws: Generation, build, filesystem, result-parsing, or test-validation errors.
-    fileprivate func run() throws {
-        let manager: FileManager = .default
-        let workURL: URL = self.packageURL.appendingPathComponent(".build/snapshots")
-        let buildURL: URL = workURL.appendingPathComponent("DerivedData")
-        let runURL: URL = workURL.appendingPathComponent("Runs/\(UUID().uuidString)")
-        try manager.createDirectory(at: runURL, withIntermediateDirectories: true)
-        reportProgress("Snapshot target: \(self.testTargetName)")
-        reportProgress("Snapshot destination: \(self.arguments.destination)")
-        reportProgress("Logs and results: \(runURL.path)")
+    /// - Throws: `RecordingError` if generation, recording, result parsing, or verification fails.
+    fileprivate func run() throws(RecordingError) {
+        do {
+            let manager: FileManager = .default
+            let workURL: URL = self.packageURL.appendingPathComponent(".build/snapshots")
+            let buildURL: URL = workURL.appendingPathComponent("DerivedData")
+            let runURL: URL = workURL.appendingPathComponent("Runs/\(UUID().uuidString)")
+            try manager.createDirectory(at: runURL, withIntermediateDirectories: true)
+            ProcessRunner.reportProgress("Snapshot target: \(self.testTargetName)")
+            ProcessRunner.reportProgress("Snapshot destination: \(self.arguments.destination)")
+            ProcessRunner.reportProgress("Logs and results: \(runURL.path)")
 
-        reportProgress("Generating the iOS test host…")
-        var generationArguments: Array<String> = [
-            "swift", self.packageURL.appendingPathComponent("Scripts/GenerateTestHost.swift").path
-        ]
-        if self.testTargetName == "RepositorySnapshotTests" {
-            generationArguments.append("--repository-snapshots")
-        }
-        let generationStatus = try ProcessRunner.run(
-            arguments: generationArguments,
-            workingDirectoryURL: self.packageURL,
-            logURL: runURL.appendingPathComponent("generate.log")
-        )
-        guard generationStatus == 0 else {
-            throw RecordingError(description: "Could not generate the test host. See \(runURL.path)/generate.log")
-        }
-
-        // The generated project can change its package-product references between runs. Reusing Xcode's
-        // build description in that case leaves the products unresolved even though both packages exist.
-        if manager.fileExists(atPath: buildURL.path) {
-            try manager.removeItem(at: buildURL)
-        }
-
-        let projectURL = self.packageURL.appendingPathComponent(".build/tests/Host/TestHost.xcodeproj")
-        let buildLogURL: URL = runURL.appendingPathComponent("build.log")
-        reportProgress("Building the iOS test host…")
-        let buildStatus: Int32 = try ProcessRunner.run(
-            arguments: [
-                "xcodebuild", "build-for-testing",
-                "-project", projectURL.path,
-                "-scheme", "TestHost",
-                "-destination", self.arguments.destination,
-                "-derivedDataPath", buildURL.path,
-                "-clonedSourcePackagesDirPath", workURL.appendingPathComponent("PackageCache").path,
-                "CODE_SIGNING_ALLOWED=NO"
-            ],
-            workingDirectoryURL: self.packageURL,
-            logURL: buildLogURL
-        )
-        guard buildStatus == 0 else {
-            let log: String = (try? String(contentsOf: buildLogURL, encoding: .utf8)) ?? ""
-            let errors: Array<String> = log.components(separatedBy: .newlines).filter {
-                $0.contains("error:")
+            ProcessRunner.reportProgress("Generating the iOS test host…")
+            var generationArguments: Array<String> = [
+                "swift", self.packageURL.appendingPathComponent("Scripts/GenerateTestHost.swift").path
+            ]
+            if self.testTargetName == "RepositorySnapshotTests" {
+                generationArguments.append("--repository-snapshots")
             }
-            let detail: String = errors.suffix(4).joined(separator: "\n")
-            throw RecordingError(
-                description: """
-                    The iOS test host could not build.
-                    \(detail)
-
-                    If launched from Xcode's package-command menu, the plugin is sandboxed and cannot run this recorder.
-                    Use the Terminal plugin with --disable-sandbox.
-                    For automatic recording and verification, use the Terminal command documented in Docs/Snapshotting.md.
-                    Full build log: \(buildLogURL.path)
-                    """
+            let generationStatus = try ProcessRunner.run(
+                arguments: generationArguments,
+                workingDirectoryURL: self.packageURL,
+                logURL: runURL.appendingPathComponent("generate.log")
             )
-        }
+            guard generationStatus == 0 else {
+                throw RecordingError.hostGenerationFailed(logPath: runURL.appendingPathComponent("generate.log").path)
+            }
 
-        let productsURL: URL = buildURL.appendingPathComponent("Build/Products")
-        let plans: Array<URL> = try manager.contentsOfDirectory(
-            at: productsURL,
-            includingPropertiesForKeys: [.contentModificationDateKey]
-        ).filter { $0.lastPathComponent.hasPrefix("TestHost_") && $0.pathExtension == "xctestrun" }
-        // Cached builds can retain configurations for other architectures or SDK versions.
-        let planURL: URL? = try plans.sorted {
-            let first: Date =
-                try $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate ?? .distantPast
-            let second: Date =
-                try $1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate ?? .distantPast
-            return first > second
-        }.first
-        guard let planURL else {
-            throw RecordingError(description: "Xcode produced no test-run configuration. See \(buildLogURL.path)")
-        }
+            // The generated project can change its package-product references between runs. Reusing Xcode's
+            // build description in that case leaves the products unresolved even though both packages exist.
+            if manager.fileExists(atPath: buildURL.path) {
+                try manager.removeItem(at: buildURL)
+            }
 
-        // Keep copies beside the original so Xcode's __TESTROOT__ paths remain valid.
-        let recordingPlanURL: URL = productsURL.appendingPathComponent("record-\(runURL.lastPathComponent).xctestrun")
-        let verificationPlanURL: URL = productsURL.appendingPathComponent(
-            "verify-\(runURL.lastPathComponent).xctestrun"
-        )
-        defer {
-            try? manager.removeItem(at: recordingPlanURL)
-            try? manager.removeItem(at: verificationPlanURL)
-        }
-        try self.writePlan(sourceURL: planURL, destinationURL: recordingPlanURL, record: "all")
-        try self.writePlan(sourceURL: planURL, destinationURL: verificationPlanURL, record: "never")
-
-        reportProgress("Recording references… (recording assertions are expected to fail)")
-        let recordResultURL: URL = runURL.appendingPathComponent("Record.xcresult")
-        let recordStatus: Int32 = try self.test(planURL: recordingPlanURL, resultURL: recordResultURL)
-        let recordSummary: Dictionary<String, Any> = try self.result(arguments: ["summary"], resultURL: recordResultURL)
-        let failures: Array<Dictionary<String, Any>> =
-            recordSummary["testFailures"] as? Array<Dictionary<String, Any>> ?? []
-        let failedTestCount: Int = recordSummary["failedTests"] as? Int ?? 0
-        let passedTestCount: Int = recordSummary["passedTests"] as? Int ?? 0
-        let testCount: Int = recordSummary["totalTestCount"] as? Int ?? 0
-        // Recording assertions fail, but tests without snapshots can pass normally.
-        // Require at least one recording test and inspect every failure below; exit 65 alone is insufficient.
-        guard recordStatus == 65, failedTestCount > 0,
-            testCount == failedTestCount + passedTestCount,
-            failures.count == failedTestCount
-        else {
-            throw RecordingError(
-                description:
-                    "Recording did not execute the expected snapshot tests. Check the filter and \(recordResultURL.path)"
+            let projectURL = self.packageURL.appendingPathComponent(".build/tests/Host/TestHost.xcodeproj")
+            let buildLogURL: URL = runURL.appendingPathComponent("build.log")
+            ProcessRunner.reportProgress("Building the iOS test host…")
+            let buildStatus: Int32 = try ProcessRunner.run(
+                arguments: [
+                    "xcodebuild", "build-for-testing",
+                    "-project", projectURL.path,
+                    "-scheme", "TestHost",
+                    "-destination", self.arguments.destination,
+                    "-derivedDataPath", buildURL.path,
+                    "-clonedSourcePackagesDirPath", workURL.appendingPathComponent("PackageCache").path,
+                    "CODE_SIGNING_ALLOWED=NO"
+                ],
+                workingDirectoryURL: self.packageURL,
+                logURL: buildLogURL
             )
-        }
+            guard buildStatus == 0 else {
+                let log: String = (try? String(contentsOf: buildLogURL, encoding: .utf8)) ?? ""
+                let errors: Array<String> = log.components(separatedBy: .newlines).filter {
+                    $0.contains("error:")
+                }
+                let detail: String = errors.suffix(4).joined(separator: "\n")
+                throw RecordingError.hostBuildFailed(
+                    message: """
+                        The iOS test host could not build.
+                        \(detail)
 
-        // Recording intentionally fails assertions. Accept only recording issues, including every issue within a test.
-        var snapshotCount: Int = 0
-        for failure in failures {
-            guard let identifier: String = failure["testIdentifierString"] as? String else {
-                throw RecordingError(
-                    description: "Xcode returned an unrecognized test failure. See \(recordResultURL.path)"
+                        If launched from Xcode's package-command menu, the plugin is sandboxed and cannot run this \
+                        recorder.
+                        Use the Terminal plugin with --disable-sandbox.
+                        For automatic recording and verification, use the Terminal command documented in \
+                        Docs/Snapshotting.md.
+                        Full build log: \(buildLogURL.path)
+                        """
                 )
             }
-            let details: Dictionary<String, Any> = try self.result(
-                arguments: ["test-details", "--test-id", identifier],
+
+            let productsURL: URL = buildURL.appendingPathComponent("Build/Products")
+            let plans: Array<URL> = try manager.contentsOfDirectory(
+                at: productsURL,
+                includingPropertiesForKeys: [.contentModificationDateKey]
+            ).filter { $0.lastPathComponent.hasPrefix("TestHost_") && $0.pathExtension == "xctestrun" }
+            // Cached builds can retain configurations for other architectures or SDK versions.
+            let planURL: URL? = try plans.sorted {
+                let first: Date =
+                    try $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+                    ?? .distantPast
+                let second: Date =
+                    try $1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+                    ?? .distantPast
+                return first > second
+            }.first
+            guard let planURL else {
+                throw RecordingError.missingTestPlan(logPath: buildLogURL.path)
+            }
+
+            // Keep copies beside the original so Xcode's __TESTROOT__ paths remain valid.
+            let recordingPlanURL: URL = productsURL.appendingPathComponent(
+                "record-\(runURL.lastPathComponent).xctestrun"
+            )
+            let verificationPlanURL: URL = productsURL.appendingPathComponent(
+                "verify-\(runURL.lastPathComponent).xctestrun"
+            )
+            defer {
+                try? manager.removeItem(at: recordingPlanURL)
+                try? manager.removeItem(at: verificationPlanURL)
+            }
+            try self.writePlan(sourceURL: planURL, destinationURL: recordingPlanURL, record: "all")
+            try self.writePlan(sourceURL: planURL, destinationURL: verificationPlanURL, record: "never")
+
+            ProcessRunner.reportProgress("Recording references… (recording assertions are expected to fail)")
+            let recordResultURL: URL = runURL.appendingPathComponent("Record.xcresult")
+            let recordStatus: Int32 = try self.test(planURL: recordingPlanURL, resultURL: recordResultURL)
+            let recordSummary: Dictionary<String, Any> = try self.result(
+                arguments: ["summary"],
                 resultURL: recordResultURL
             )
-            let issues: Array<String> = Self.failureMessages(in: details)
-            guard !issues.isEmpty,
-                issues.allSatisfy({
-                    $0.hasPrefix("Issue recorded: Record mode is on. Automatically recorded snapshot:")
-                })
+            let failures: Array<Dictionary<String, Any>> =
+                recordSummary["testFailures"] as? Array<Dictionary<String, Any>> ?? []
+            let failedTestCount: Int = recordSummary["failedTests"] as? Int ?? 0
+            let passedTestCount: Int = recordSummary["passedTests"] as? Int ?? 0
+            let testCount: Int = recordSummary["totalTestCount"] as? Int ?? 0
+            // Recording assertions fail, but tests without snapshots can pass normally.
+            // Require at least one recording test and inspect every failure below; exit 65 alone is insufficient.
+            guard recordStatus == 65, failedTestCount > 0,
+                testCount == failedTestCount + passedTestCount,
+                failures.count == failedTestCount
             else {
-                throw RecordingError(
-                    description:
-                        "Recording encountered a real test failure in \(identifier). See \(recordResultURL.path)"
-                )
+                throw RecordingError.unexpectedRecordingResults(path: recordResultURL.path)
             }
-            snapshotCount += issues.count
-        }
 
-        reportProgress("Verifying \(snapshotCount) recorded snapshots…")
-        let verifyResultURL: URL = runURL.appendingPathComponent("Verify.xcresult")
-        let verifyStatus: Int32 = try self.test(planURL: verificationPlanURL, resultURL: verifyResultURL)
-        let verifySummary: Dictionary<String, Any> = try self.result(arguments: ["summary"], resultURL: verifyResultURL)
-        // A successful run selecting fewer tests must not count as complete verification.
-        guard verifyStatus == 0, verifySummary["passedTests"] as? Int == testCount,
-            verifySummary["totalTestCount"] as? Int == testCount,
-            verifySummary["failedTests"] as? Int == 0
-        else {
-            throw RecordingError(
-                description: "The new references did not pass verification. See \(verifyResultURL.path)"
+            // Recording intentionally fails assertions. Accept only recording issues, including every issue within a
+            // test.
+            var snapshotCount: Int = 0
+            for failure in failures {
+                guard let identifier: String = failure["testIdentifierString"] as? String else {
+                    throw RecordingError.unrecognizedTestFailure(path: recordResultURL.path)
+                }
+                let details: Dictionary<String, Any> = try self.result(
+                    arguments: ["test-details", "--test-id", identifier],
+                    resultURL: recordResultURL
+                )
+                let issues: Array<String> = Self.failureMessages(in: details)
+                guard !issues.isEmpty,
+                    issues.allSatisfy({
+                        $0.hasPrefix("Issue recorded: Record mode is on. Automatically recorded snapshot:")
+                    })
+                else {
+                    throw RecordingError.testFailure(
+                        identifier: identifier,
+                        path: recordResultURL.path
+                    )
+                }
+                snapshotCount += issues.count
+            }
+
+            ProcessRunner.reportProgress("Verifying \(snapshotCount) recorded snapshots…")
+            let verifyResultURL: URL = runURL.appendingPathComponent("Verify.xcresult")
+            let verifyStatus: Int32 = try self.test(planURL: verificationPlanURL, resultURL: verifyResultURL)
+            let verifySummary: Dictionary<String, Any> = try self.result(
+                arguments: ["summary"],
+                resultURL: verifyResultURL
             )
+            // A successful run selecting fewer tests must not count as complete verification.
+            guard verifyStatus == 0, verifySummary["passedTests"] as? Int == testCount,
+                verifySummary["totalTestCount"] as? Int == testCount,
+                verifySummary["failedTests"] as? Int == 0
+            else {
+                throw RecordingError.verificationFailed(path: verifyResultURL.path)
+            }
+            ProcessRunner.reportProgress(
+                "Recorded and verified \(snapshotCount) snapshots across \(testCount) test functions."
+            )
+            let referencesURL: URL = self.packageURL
+                .appendingPathComponent("Tests/\(self.testTargetName)/__Snapshots__")
+            ProcessRunner.reportProgress(
+                "References: \(referencesURL.path)"
+            )
+        } catch let error as RecordingError {
+            throw error
+        } catch let error {
+            throw RecordingError.operationFailed(underlyingError: error)
         }
-        reportProgress("Recorded and verified \(snapshotCount) snapshots across \(testCount) test functions.")
-        let referencesURL: URL = self.packageURL
-            .appendingPathComponent("Tests/\(self.testTargetName)/__Snapshots__")
-        reportProgress(
-            "References: \(referencesURL.path)"
-        )
     }
 
     /// Copies a test-run configuration with an explicit recording mode for its single test target.
@@ -396,7 +532,7 @@ fileprivate struct SnapshotRecorder {
         }
         let updated: Any = update(original)
         guard targetCount == 1 else {
-            throw RecordingError(description: "Expected one iOS snapshot target, found \(targetCount).")
+            throw RecordingError.invalidTargetCount(count: targetCount)
         }
         let data: Data = try PropertyListSerialization.data(fromPropertyList: updated, format: .xml, options: 0)
         try data.write(to: destinationURL, options: .atomic)
@@ -443,7 +579,7 @@ fileprivate struct SnapshotRecorder {
             workingDirectoryURL: self.packageURL
         )
         guard let result = try JSONSerialization.jsonObject(with: data) as? Dictionary<String, Any> else {
-            throw RecordingError(description: "Xcode returned an invalid result summary.")
+            throw RecordingError.invalidResultSummary
         }
         return result
     }
@@ -467,43 +603,76 @@ fileprivate struct SnapshotRecorder {
     }
 }
 
-// MARK: - Recording
+// MARK: - SnapshotRecordingRunner
 
-// Resolve the repository from this script rather than the caller's working directory.
-do {
-    let arguments: RecordingArguments = try .init(Array(CommandLine.arguments.dropFirst()))
-    if arguments.showsHelp {
-        reportProgress(RecordingArguments.usage)
-    } else {
-        let packageURL: URL = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-        let repositoryTarget = "RepositorySnapshotTests"
-        let comparisonTarget = "BuyMeACoffeeSnapshotTests"
-        if arguments.filter == nil {
-            try SnapshotRecorder(
-                packageURL: packageURL,
-                arguments: arguments,
-                testTargetName: comparisonTarget
-            ).run()
-            try SnapshotRecorder(
-                packageURL: packageURL,
-                arguments: arguments,
-                testTargetName: repositoryTarget
-            ).run()
+/// Selects the snapshot targets and coordinates recording and verification.
+fileprivate struct SnapshotRecordingRunner {
+    /// The validated destination, filter, and help option.
+    private let arguments: Arguments
+
+    /// The repository containing the recording scripts and reference images.
+    private let packageURL: URL
+
+    /// Creates a runner for the requested recording operation.
+    ///
+    /// - Parameters:
+    ///   - arguments: The validated command-line options.
+    ///   - packageURL: The repository resolved from the script's location.
+    fileprivate init(
+        arguments: Arguments,
+        packageURL: URL
+    ) {
+        self.arguments = arguments
+        self.packageURL = packageURL
+    }
+
+    /// Shows help or records and verifies the selected targets in sequence.
+    ///
+    /// - Throws: `RecordingError` if any selected target cannot be recorded and verified.
+    fileprivate func run() throws(RecordingError) {
+        if arguments.showsHelp {
+            ProcessRunner.reportProgress(Arguments.usage)
         } else {
-            let targetName: String =
-                ["RepositorySnapshotTests/", "TutorialSnapshotTests/"].contains {
-                    arguments.filter?.hasPrefix($0) == true
-                }
-                ? repositoryTarget
-                : comparisonTarget
-            try SnapshotRecorder(
-                packageURL: packageURL,
-                arguments: arguments,
-                testTargetName: targetName
-            ).run()
+            let repositoryTarget = "RepositorySnapshotTests"
+            let comparisonTarget = "BuyMeACoffeeSnapshotTests"
+            if arguments.filter == nil {
+                try SnapshotRecorder(
+                    packageURL: packageURL,
+                    arguments: arguments,
+                    testTargetName: comparisonTarget
+                ).run()
+                try SnapshotRecorder(
+                    packageURL: packageURL,
+                    arguments: arguments,
+                    testTargetName: repositoryTarget
+                ).run()
+            } else {
+                let targetName: String =
+                    ["RepositorySnapshotTests/", "TutorialSnapshotTests/"].contains {
+                        return arguments.filter?.hasPrefix($0) == true
+                    }
+                    ? repositoryTarget
+                    : comparisonTarget
+                try SnapshotRecorder(
+                    packageURL: packageURL,
+                    arguments: arguments,
+                    testTargetName: targetName
+                ).run()
+            }
         }
     }
-} catch {
+}
+
+// MARK: - Recording
+
+do throws(RecordingError) {
+    let arguments: Arguments = try .init(Array(CommandLine.arguments.dropFirst()))
+    let runner: SnapshotRecordingRunner = .init(
+        arguments: arguments,
+        packageURL: URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+    )
+    try runner.run()
+} catch let error {
     FileHandle.standardError.write(Data("Snapshot recording failed: \(error)\n".utf8))
     exit(EXIT_FAILURE)
 }

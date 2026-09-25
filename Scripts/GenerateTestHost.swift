@@ -8,6 +8,66 @@
 
 import Foundation
 
+// MARK: - TestHostGenerationError
+
+/// An error produced while selecting or generating a test host.
+fileprivate enum TestHostGenerationError {
+    /// The command-line arguments do not select a supported target.
+    case invalidArguments
+
+    /// The lockfile does not contain the required SnapshotTesting pin.
+    case missingDependency
+
+    /// The project inputs could not be read or its generated files could not be written.
+    ///
+    /// - Parameter underlyingError: The original file-system, serialization, or process error.
+    case generationFailed(underlyingError: any Error)
+}
+
+// MARK: - CustomStringConvertible
+
+extension TestHostGenerationError: CustomStringConvertible {
+    fileprivate var description: String {
+        switch self {
+        case .invalidArguments:
+            return "Usage: swift Scripts/GenerateTestHost.swift [--repository-snapshots|--unit-tests]"
+        case .missingDependency:
+            return "Package.resolved must contain swift-snapshot-testing. Resolve package dependencies first."
+        case .generationFailed(let underlyingError):
+            return "Could not generate the test host: \(underlyingError)"
+        }
+    }
+}
+
+// MARK: - Error
+
+extension TestHostGenerationError: Error {}
+
+// MARK: - Arguments
+
+/// The command-line selection of the hosted test suite.
+fileprivate struct Arguments {
+    /// The target name shared by the generated project and its test sources.
+    fileprivate let testName: String
+
+    /// Selects button snapshot tests, repository snapshot tests, or unit tests.
+    ///
+    /// - Parameter arguments: Arguments following the script name.
+    /// - Throws: `TestHostGenerationError.invalidArguments` for unsupported options.
+    fileprivate init(_ arguments: Array<String>) throws(TestHostGenerationError) {
+        switch arguments {
+        case []:
+            self.testName = "BuyMeACoffeeSnapshotTests"
+        case ["--repository-snapshots"]:
+            self.testName = "RepositorySnapshotTests"
+        case ["--unit-tests"]:
+            self.testName = "BuyMeACoffeeUnitTests"
+        default:
+            throw TestHostGenerationError.invalidArguments
+        }
+    }
+}
+
 // MARK: - GeneratedProject
 
 /// Serialized project contents and target identifiers needed to create its scheme.
@@ -100,36 +160,43 @@ fileprivate struct TestHost {
 
     /// Creates the host while preserving unchanged files for incremental builds.
     ///
-    /// - Throws: Source discovery, dependency parsing, project serialization, or file-writing errors.
-    fileprivate func generate() throws {
-        let sources = try testSources()
-        let dependency = try resolvedDependency()
-        let project = try SnapshotProjectBuilder().build(
-            root: packageDirectory,
-            sources: sources,
-            dependency: dependency,
-            testName: self.testName
-        )
-        try write(project.data, to: projectDirectory.appendingPathComponent("project.pbxproj"))
-        try writeApplication()
-        try write(
-            comparisonScheme(for: project),
-            to: projectDirectory.appendingPathComponent("xcshareddata/xcschemes/TestHost.xcscheme")
-        )
-        print("Generated test host: \(projectDirectory.path)")
+    /// - Throws: `TestHostGenerationError` if inputs are invalid or the project cannot be generated.
+    fileprivate func run() throws(TestHostGenerationError) {
+        do {
+            let sources = try testSources()
+            let dependency = try resolvedDependency()
+            let project = try SnapshotProjectBuilder().build(
+                root: packageDirectory,
+                sources: sources,
+                dependency: dependency,
+                testName: self.testName
+            )
+            try write(project.data, to: projectDirectory.appendingPathComponent("project.pbxproj"))
+            try writeApplication()
+            try write(
+                comparisonScheme(for: project),
+                to: projectDirectory.appendingPathComponent("xcshareddata/xcschemes/TestHost.xcscheme")
+            )
+            print("Generated test host: \(projectDirectory.path)")
+        } catch let error as TestHostGenerationError {
+            throw error
+        } catch let error {
+            throw TestHostGenerationError.generationFailed(underlyingError: error)
+        }
     }
 
     /// Finds immediate Swift test files in stable path order without copying their contents.
     ///
     /// - Returns: Absolute source URLs, keeping snapshot paths anchored in the repository.
     /// - Throws: An error if the test directory cannot be read.
-    private func testSources() throws -> [URL] {
+    private func testSources() throws -> Array<URL> {
         // Directory containing the original test sources.
         let testDirectory = packageDirectory.appendingPathComponent("Tests/\(self.testName)")
 
         // Immediate Swift source files, sorted by path to make project generation deterministic.
         let sources = try manager.contentsOfDirectory(at: testDirectory, includingPropertiesForKeys: nil)
-            .filter { $0.pathExtension == "swift" }.sorted { $0.path < $1.path }
+            .filter { $0.pathExtension == "swift" }
+            .sorted { $0.path < $1.path }
 
         return sources
     }
@@ -143,21 +210,14 @@ fileprivate struct TestHost {
         let lockData = try Data(contentsOf: packageDirectory.appendingPathComponent("Package.resolved"))
 
         // Read the repository URL and commit from the lockfile instead of maintaining a second dependency version.
-        guard let lock = try JSONSerialization.jsonObject(with: lockData) as? [String: Any],
-            let pins = lock["pins"] as? [[String: Any]],
+        guard let lock = try JSONSerialization.jsonObject(with: lockData) as? Dictionary<String, Any>,
+            let pins = lock["pins"] as? Array<Dictionary<String, Any>>,
             let pin = pins.first(where: { $0["identity"] as? String == "swift-snapshot-testing" }),
             let location = pin["location"] as? String,
-            let state = pin["state"] as? [String: Any],
+            let state = pin["state"] as? Dictionary<String, Any>,
             let revision = state["revision"] as? String
         else {
-            throw NSError(
-                domain: "TestHost",
-                code: 1,
-                userInfo: [
-                    NSLocalizedDescriptionKey:
-                        "Package.resolved must contain swift-snapshot-testing. Resolve package dependencies first."
-                ]
-            )
+            throw TestHostGenerationError.missingDependency
         }
 
         return ResolvedDependency(
@@ -246,7 +306,7 @@ fileprivate struct TestHost {
 /// A new builder is created for each generation so identifiers remain stable between runs.
 fileprivate final class SnapshotProjectBuilder {
     /// Project object table, keyed by the identifiers returned by `object(_:_:)`.
-    private var objects: [String: Any] = [:]
+    private var objects: Dictionary<String, Any> = [:]
 
     /// Counter used to assign stable identifiers when objects are created in the same order.
     private var nextID = 0
@@ -262,7 +322,7 @@ fileprivate final class SnapshotProjectBuilder {
     ///   - isa: Xcode project object type, such as `PBXNativeTarget`.
     ///   - values: Fields for the object; the explicit type overrides any supplied `isa` field.
     /// - Returns: A unique, 24-digit hexadecimal project identifier.
-    private func object(_ isa: String, _ values: [String: Any]) -> String {
+    private func object(_ isa: String, _ values: Dictionary<String, Any>) -> String {
         nextID += 1
         let id = String(format: "%024X", nextID)
         objects[id] = values.merging(["isa": isa]) { _, new in new }
@@ -273,7 +333,7 @@ fileprivate final class SnapshotProjectBuilder {
     ///
     /// - Parameter settings: Build settings applied to both configurations.
     /// - Returns: The identifier of a configuration list whose default is Debug.
-    private func configurations(_ settings: [String: Any]) -> String {
+    private func configurations(_ settings: Dictionary<String, Any>) -> String {
         let configs = ["Debug", "Release"].map {
             object(
                 "XCBuildConfiguration",
@@ -295,8 +355,8 @@ fileprivate final class SnapshotProjectBuilder {
     ///   - isa: Build phase type, such as `PBXSourcesBuildPhase`.
     ///   - files: Build-file object identifiers included in the phase; defaults to an empty phase.
     /// - Returns: The new build phase identifier.
-    private func phase(_ isa: String, _ files: [String] = []) -> String {
-        object(
+    private func phase(_ isa: String, _ files: Array<String> = []) -> String {
+        return object(
             isa,
             [
                 "buildActionMask": "2147483647",
@@ -307,7 +367,7 @@ fileprivate final class SnapshotProjectBuilder {
     }
 
     /// Shared simulator build settings; iOS 26 enables glass styles and testability exposes internal declarations.
-    private let common: [String: Any] = [
+    private let common: Dictionary<String, Any> = [
         "CODE_SIGNING_ALLOWED": "NO",
         "ENABLE_TESTABILITY": "YES",
         "GENERATE_INFOPLIST_FILE": "YES",
@@ -327,7 +387,7 @@ fileprivate final class SnapshotProjectBuilder {
     ///
     /// - Parameter extra: Settings that replace matching shared values or add target-specific values.
     /// - Returns: The target's configuration list identifier.
-    private func settings(_ extra: [String: Any]) -> String {
+    private func settings(_ extra: Dictionary<String, Any>) -> String {
         return configurations(common.merging(extra) { _, new in new })
     }
 
@@ -342,7 +402,7 @@ fileprivate final class SnapshotProjectBuilder {
     /// - Throws: Property-list serialization errors.
     fileprivate func build(
         root: URL,
-        sources: [URL],
+        sources: Array<URL>,
         dependency: ResolvedDependency,
         testName: String
     ) throws -> GeneratedProject {
@@ -470,7 +530,10 @@ fileprivate final class SnapshotProjectBuilder {
                 ]),
                 "buildPhases": [
                     phase("PBXSourcesBuildPhase", testSources.map { object("PBXBuildFile", ["fileRef": $0]) }),
-                    phase("PBXFrameworksBuildPhase", dependencies.map { object("PBXBuildFile", ["productRef": $0]) }),
+                    phase(
+                        "PBXFrameworksBuildPhase",
+                        dependencies.map { object("PBXBuildFile", ["productRef": $0]) }
+                    ),
                     phase("PBXResourcesBuildPhase")
                 ],
                 "buildRules": [],
@@ -520,39 +583,18 @@ fileprivate final class SnapshotProjectBuilder {
 
 // MARK: - Generation
 
-/// Command-line options following the script name, used to select the hosted test target.
-fileprivate let arguments: Array<String> = Array(CommandLine.arguments.dropFirst())
-
-/// The hosted test target selected by the command-line options.
-///
-/// Defaults to button snapshot tests. `--repository-snapshots` selects repository artwork tests, while `--unit-tests`
-/// selects unit tests. Unsupported arguments stop generation with a usage diagnostic.
-fileprivate let testName: String =
-    switch arguments {
-    case []:
-        "BuyMeACoffeeSnapshotTests"
-    case ["--repository-snapshots"]:
-        "RepositorySnapshotTests"
-    case ["--unit-tests"]:
-        "BuyMeACoffeeUnitTests"
-    default:
-        throw NSError(
-            domain: "TestHost",
-            code: 2,
-            userInfo: [
-                NSLocalizedDescriptionKey:
-                    "Usage: swift Scripts/GenerateTestHost.swift [--repository-snapshots|--unit-tests]"
-            ]
-        )
-    }
-
-/// The repository root, resolved relative to this script rather than the caller's working directory.
-fileprivate let packageDirectory: URL = .init(fileURLWithPath: #filePath)
-    .deletingLastPathComponent()
-    .deletingLastPathComponent()
-
-// Generate the selected host; propagate failures so callers receive a nonzero exit status.
-try TestHost(
-    packageDirectory: packageDirectory,
-    testName: testName
-).generate()
+do throws(TestHostGenerationError) {
+    let arguments: Arguments = try .init(Array(CommandLine.arguments.dropFirst()))
+    // Resolve the repository from this script rather than the caller's working directory.
+    let packageDirectory: URL = .init(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+    let host: TestHost = .init(
+        packageDirectory: packageDirectory,
+        testName: arguments.testName
+    )
+    try host.run()
+} catch let error {
+    FileHandle.standardError.write(Data("\(error)\n".utf8))
+    exit(EXIT_FAILURE)
+}

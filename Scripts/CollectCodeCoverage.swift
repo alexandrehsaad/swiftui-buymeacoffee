@@ -9,6 +9,84 @@
 import CryptoKit
 import Foundation
 
+// MARK: - CodeCoverageCollectionError
+
+/// An error produced while collecting or merging coverage artifacts.
+fileprivate enum CodeCoverageCollectionError {
+    /// The argument count is unsupported.
+    case invalidArguments
+
+    /// The operation or test suite is unsupported.
+    case invalidOperation
+
+    /// The suite does not have exactly one coverage profile.
+    ///
+    /// - Parameter suite: The suite whose build directory is being inspected.
+    case invalidProfileCount(suite: String)
+
+    /// Coverage output already exists.
+    ///
+    /// - Parameter path: The output directory that already exists.
+    case existingOutput(path: String)
+
+    /// A successful CI job has no coverage artifact.
+    ///
+    /// - Parameter suite: The successful suite whose artifacts are missing.
+    case missingArtifact(suite: String)
+
+    /// Combined coverage output already exists.
+    case existingCombinedOutput
+
+    /// The input manifests have incompatible build metadata.
+    case incompatibleInputs
+
+    /// Coverage belongs to a different commit.
+    case unexpectedCommit
+
+    /// An external command failed or was interrupted.
+    ///
+    /// - Parameter command: The command that did not complete successfully.
+    case commandFailed(command: String)
+
+    /// A coverage file or external command could not be processed.
+    ///
+    /// - Parameter underlyingError: The original file-system, serialization, or process error.
+    case operationFailed(underlyingError: any Error)
+}
+
+// MARK: - CustomStringConvertible
+
+extension CodeCoverageCollectionError: CustomStringConvertible {
+    fileprivate var description: String {
+        switch self {
+        case .invalidArguments:
+            return "Usage: CollectCodeCoverage.swift --collect UnitTests|SnapshotTests OR --merge <directory>"
+        case .invalidOperation:
+            return "Invalid coverage arguments"
+        case .invalidProfileCount(let suite):
+            return "Expected exactly one coverage profile for \(suite); clean its build directory and rerun."
+        case .existingOutput(let path):
+            return "Coverage output already exists: \(path). Move it aside before collecting again."
+        case .missingArtifact(let suite):
+            return "Missing coverage artifact for successful suite \(suite)."
+        case .existingCombinedOutput:
+            return "Combined coverage already exists. Move it aside before generating a new report."
+        case .incompatibleInputs:
+            return "Coverage inputs differ in commit, sources, toolchain, or source paths; refusing to merge."
+        case .unexpectedCommit:
+            return "Coverage does not belong to the workflow's checked-out commit."
+        case .commandFailed(let command):
+            return "Coverage command failed: \(command)"
+        case .operationFailed(let underlyingError):
+            return "Could not process coverage artifacts: \(underlyingError)"
+        }
+    }
+}
+
+// MARK: - Error
+
+extension CodeCoverageCollectionError: Error {}
+
 // MARK: - Arguments
 
 /// The operation requested by the coverage collection command.
@@ -32,23 +110,17 @@ fileprivate struct Arguments {
     /// Parses the arguments following the script name.
     ///
     /// - Parameter arguments: One operation flag and its suite name or directory.
-    /// - Throws: An error if the argument count, flag, or suite name is invalid.
-    fileprivate init(_ arguments: Array<String>) throws {
+    /// - Throws: `CodeCoverageCollectionError` if the argument count, flag, or suite name is invalid.
+    fileprivate init(_ arguments: Array<String>) throws(CodeCoverageCollectionError) {
         guard arguments.count == 2 else {
-            throw NSError(
-                domain: "Usage: CollectCodeCoverage.swift --collect UnitTests|SnapshotTests OR --merge <directory>",
-                code: 1
-            )
+            throw CodeCoverageCollectionError.invalidArguments
         }
         if arguments[0] == "--collect", ["UnitTests", "SnapshotTests"].contains(arguments[1]) {
             self.operation = .collect(suite: arguments[1])
         } else if arguments[0] == "--merge" {
             self.operation = .merge(directory: arguments[1])
         } else {
-            throw NSError(
-                domain: "Invalid coverage arguments",
-                code: 1
-            )
+            throw CodeCoverageCollectionError.invalidOperation
         }
     }
 }
@@ -128,16 +200,36 @@ fileprivate struct CodeCoverageCollector {
         self.environment = environment
     }
 
+    /// Performs the selected coverage operation with consistent error reporting.
+    ///
+    /// - Parameter arguments: The validated collection or merge operation.
+    /// - Throws: `CodeCoverageCollectionError` if validation, file processing, or tool execution fails.
+    fileprivate func run(arguments: Arguments) throws(CodeCoverageCollectionError) {
+        do {
+            switch arguments.operation {
+            case .collect(let suite):
+                try self.collect(suite)
+            case .merge(let directory):
+                try self.merge(directory)
+            }
+        } catch let error as CodeCoverageCollectionError {
+            throw error
+        } catch let error {
+            throw CodeCoverageCollectionError.operationFailed(underlyingError: error)
+        }
+    }
+
     /// Collects a test suite's raw profile and library coverage mapping for later merging.
     ///
     /// Copies the profile and instrumented library object from the suite's build directory into `.build/coverage`.
-    /// A manifest records the current source revision, source digest, Xcode version, and source paths for merge validation.
+    /// A manifest records the current source revision, source digest, Xcode version, and source paths for merge
+    /// validation.
     /// Run collection from the repository root immediately after the corresponding tests, without changing the sources.
     /// Existing output is preserved; collection fails instead of replacing it.
     ///
     /// - Parameter suite: `UnitTests` or `SnapshotTests`, matching the runner's build directory.
     /// - Throws: An error if build output is missing, ambiguous, or cannot be copied.
-    fileprivate func collect(_ suite: String) throws {
+    private func collect(_ suite: String) throws {
         let build: URL = self.packageDirectory.appendingPathComponent(".build/workflows/\(suite)/Build")
         let profileRoot: URL = build.appendingPathComponent("ProfileData")
         let profiles: Array<URL> =
@@ -148,10 +240,7 @@ fileprivate struct CodeCoverageCollector {
             .filter { $0.lastPathComponent == "Coverage.profdata" }
 
         guard profiles.count == 1, let profile = profiles.first else {
-            throw NSError(
-                domain: "Expected exactly one coverage profile for \(suite); clean its build directory and rerun.",
-                code: 1
-            )
+            throw CodeCoverageCollectionError.invalidProfileCount(suite: suite)
         }
 
         let sourceRoot: URL = self.packageDirectory.appendingPathComponent("Sources")
@@ -175,9 +264,7 @@ fileprivate struct CodeCoverageCollector {
             commit: String(
                 decoding: try self.run(["git", "rev-parse", "HEAD"]),
                 as: UTF8.self
-            ).trimmingCharacters(
-                in: .whitespacesAndNewlines
-            ),
+            ).trimmingCharacters(in: .whitespacesAndNewlines),
             sourceDigest: digest.finalize().map {
                 String(
                     format: "%02x",
@@ -194,10 +281,7 @@ fileprivate struct CodeCoverageCollector {
         let destination: URL = self.packageDirectory.appendingPathComponent(".build/coverage/\(suite)")
 
         guard self.manager.fileExists(atPath: destination.path) == false else {
-            throw NSError(
-                domain: "Coverage output already exists: \(destination.path). Move it aside before collecting again.",
-                code: 1
-            )
+            throw CodeCoverageCollectionError.existingOutput(path: destination.path)
         }
 
         try self.manager.createDirectory(
@@ -220,16 +304,19 @@ fileprivate struct CodeCoverageCollector {
     ///
     /// CI downloads only artifacts belonging to successful prerequisite jobs. On a retry, stable artifact names allow
     /// the unchanged successful job's profile to be reused. Profiles are merged afresh, never with a previous report.
-    /// `UNIT_TEST_RESULT` and `SNAPSHOT_TEST_RESULT` select only successful CI jobs; without these environment variables,
-    /// local collection directories determine which suites are included. `GITHUB_SHA`, when present, must match the inputs.
+    /// `UNIT_TEST_RESULT` and `SNAPSHOT_TEST_RESULT` select only successful CI jobs; without these environment
+    /// variables,
+    /// local collection directories determine which suites are included. `GITHUB_SHA`, when present, must match the
+    /// inputs.
     ///
     /// Writes `status.md` in the new `Combined` directory for every outcome. When at least one suite is available, also
-    /// writes `Coverage.profdata` and `code-coverage.json`. With no available suites, writes only the unavailable status.
+    /// writes `Coverage.profdata` and `code-coverage.json`. With no available suites, writes only the unavailable
+    /// status.
     /// Missing artifacts for successful jobs, incompatible inputs, and existing combined output fail the command.
     ///
     /// - Parameter directory: The directory containing available `UnitTests` and `SnapshotTests` artifacts.
     /// - Throws: An error if an expected artifact is missing, incompatible, or cannot be processed.
-    fileprivate func merge(_ directory: String) throws {
+    private func merge(_ directory: String) throws {
         let root: URL = .init(
             fileURLWithPath: directory,
             relativeTo: self.packageDirectory
@@ -247,10 +334,7 @@ fileprivate struct CodeCoverageCollector {
             if let result: String = self.environment[variable] {
                 if result == "success" {
                     guard exists else {
-                        throw NSError(
-                            domain: "Missing coverage artifact for successful suite \(suite).",
-                            code: 1
-                        )
+                        throw CodeCoverageCollectionError.missingArtifact(suite: suite)
                     }
 
                     available.append(directory)
@@ -271,10 +355,7 @@ fileprivate struct CodeCoverageCollector {
         // Prevent stale exports from an earlier local merge appearing beside a new partial or unavailable report.
 
         guard self.manager.fileExists(atPath: output.path) == false else {
-            throw NSError(
-                domain: "Combined coverage already exists. Move it aside before generating a new report.",
-                code: 1
-            )
+            throw CodeCoverageCollectionError.existingCombinedOutput
         }
 
         try self.manager.createDirectory(
@@ -311,18 +392,12 @@ fileprivate struct CodeCoverageCollector {
             )
 
             guard first == manifest else {
-                throw NSError(
-                    domain: "Coverage inputs differ in commit, sources, toolchain, or source paths; refusing to merge.",
-                    code: 1
-                )
+                throw CodeCoverageCollectionError.incompatibleInputs
             }
         }
 
         if let expected: String = self.environment["GITHUB_SHA"], first.commit != expected {
-            throw NSError(
-                domain: "Coverage does not belong to the workflow's checked-out commit.",
-                code: 1
-            )
+            throw CodeCoverageCollectionError.unexpectedCommit
         }
 
         let profile: URL = output.appendingPathComponent("Coverage.profdata")
@@ -363,10 +438,7 @@ fileprivate struct CodeCoverageCollector {
         process.waitUntilExit()
 
         guard process.terminationReason == .exit && process.terminationStatus == 0 else {
-            throw NSError(
-                domain: "Coverage command failed: \(arguments.joined(separator: " "))",
-                code: 1
-            )
+            throw CodeCoverageCollectionError.commandFailed(command: arguments.joined(separator: " "))
         }
 
         return data
@@ -375,18 +447,13 @@ fileprivate struct CodeCoverageCollector {
 
 // MARK: - Coverage Collection and Merging
 
-do {
+do throws(CodeCoverageCollectionError) {
     let arguments: Arguments = try .init(Array(CommandLine.arguments.dropFirst()))
     let collector: CodeCoverageCollector = .init(
         packageDirectory: URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     )
 
-    switch arguments.operation {
-    case .collect(let suite):
-        try collector.collect(suite)
-    case .merge(let directory):
-        try collector.merge(directory)
-    }
+    try collector.run(arguments: arguments)
 } catch let error {
     FileHandle.standardError.write(Data("\(error)\n".utf8))
     exit(EXIT_FAILURE)
