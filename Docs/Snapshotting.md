@@ -121,7 +121,7 @@ assertions, and comparison failures stop the command. Partially recorded images 
 Each invocation prints a directory under `.build/snapshots/Runs` containing logs and Xcode result bundles. Open the
 result bundles in Xcode to inspect failures. Generated build files and logs are ignored by Git.
 
-### Test Host Generation Script
+## Test Host Generation Script
 
 [GenerateTestHost.swift](/Scripts/GenerateTestHost.swift) creates the temporary project under `.build/tests/Host`. Its
 `TestHost` scheme supplies the application needed to render the button styles. Generate the project and run comparisons
