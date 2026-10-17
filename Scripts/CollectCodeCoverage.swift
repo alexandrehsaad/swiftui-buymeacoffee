@@ -239,7 +239,7 @@ fileprivate struct CodeCoverageCollector {
             )?.allObjects as? Array<URL> ?? [])
             .filter { $0.lastPathComponent == "Coverage.profdata" }
 
-        guard profiles.count == 1, let profile = profiles.first else {
+        guard profiles.count == 1, let profile: URL = profiles.first else {
             throw CodeCoverageCollectionError.invalidProfileCount(suite: suite)
         }
 
@@ -374,7 +374,7 @@ fileprivate struct CodeCoverageCollector {
             encoding: .utf8
         )
 
-        guard let firstDirectory = available.first else {
+        guard let firstDirectory: URL = available.first else {
             return
         }
 
@@ -401,7 +401,7 @@ fileprivate struct CodeCoverageCollector {
         }
 
         let profile: URL = output.appendingPathComponent("Coverage.profdata")
-        let _ = try self.run(
+        let _: Data = try self.run(
             ["xcrun", "llvm-profdata", "merge", "-sparse"]
                 + available.map { $0.appendingPathComponent("Coverage.profdata").path }
                 + ["-o", profile.path]

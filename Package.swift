@@ -2,7 +2,7 @@
 
 import PackageDescription
 
-let package = Package(
+let package: Package = .init(
     name: "swiftui-buymeacoffee",
     defaultLocalization: "en",
     platforms: [

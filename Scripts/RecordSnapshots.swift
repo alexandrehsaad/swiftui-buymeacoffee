@@ -225,12 +225,12 @@ fileprivate enum ProcessRunner {
         process.standardOutput = output
         process.standardError = output
         ProcessRunner.reportProgress("Log: \(logURL.path)")
-        let started = Date()
+        let started: Date = .init()
         try process.run()
-        var nextUpdate = 10
+        var nextUpdate: Int = 10
         while process.isRunning {
             Thread.sleep(forTimeInterval: 0.25)
-            let elapsed = Int(Date().timeIntervalSince(started))
+            let elapsed: Int = Int(Date().timeIntervalSince(started))
             if elapsed >= nextUpdate {
                 let operation: String = logURL.deletingPathExtension().lastPathComponent
                 ProcessRunner.reportProgress("Still running \(operation)… \(elapsed)s elapsed")
@@ -339,7 +339,7 @@ fileprivate struct SnapshotRecorder {
             if self.testTargetName == "RepositorySnapshotTests" {
                 generationArguments.append("--repository-snapshots")
             }
-            let generationStatus = try ProcessRunner.run(
+            let generationStatus: Int32 = try ProcessRunner.run(
                 arguments: generationArguments,
                 workingDirectoryURL: self.packageURL,
                 logURL: runURL.appendingPathComponent("generate.log")
@@ -354,7 +354,7 @@ fileprivate struct SnapshotRecorder {
                 try manager.removeItem(at: buildURL)
             }
 
-            let projectURL = self.packageURL.appendingPathComponent(".build/tests/Host/TestHost.xcodeproj")
+            let projectURL: URL = self.packageURL.appendingPathComponent(".build/tests/Host/TestHost.xcodeproj")
             let buildLogURL: URL = runURL.appendingPathComponent("build.log")
             ProcessRunner.reportProgress("Building the iOS test host…")
             let buildStatus: Int32 = try ProcessRunner.run(
@@ -516,7 +516,7 @@ fileprivate struct SnapshotRecorder {
         /// - Parameter value: A dictionary, array, or scalar from the original property list.
         /// - Returns: The corresponding value with the recording environment applied to test targets.
         func update(_ value: Any) -> Any {
-            if var dictionary = value as? Dictionary<String, Any> {
+            if var dictionary: Dictionary<String, Any> = value as? Dictionary<String, Any> {
                 if dictionary["TestBundlePath"] != nil {
                     var environment: Dictionary<String, String> =
                         dictionary["EnvironmentVariables"] as? Dictionary<String, String> ?? [:]
@@ -527,7 +527,7 @@ fileprivate struct SnapshotRecorder {
                 }
                 return dictionary.mapValues { update($0) }
             }
-            if let array = value as? Array<Any> { return array.map { update($0) } }
+            if let array: Array<Any> = value as? Array<Any> { return array.map { update($0) } }
             return value
         }
         let updated: Any = update(original)
@@ -553,7 +553,7 @@ fileprivate struct SnapshotRecorder {
             "-parallel-testing-enabled", "NO",
             "-resultBundlePath", resultURL.path
         ]
-        if let filter = self.arguments.filter {
+        if let filter: String = self.arguments.filter {
             let components: Array<Substring> = filter.split(separator: "/")
             let suite: Substring = components.count == 2 ? components[0] : "BuyMeACoffeeButtonSnapshotTests"
             let function: Substring = components[components.count - 1]
@@ -578,7 +578,10 @@ fileprivate struct SnapshotRecorder {
             arguments: ["xcresulttool", "get", "test-results"] + arguments + ["--path", resultURL.path],
             workingDirectoryURL: self.packageURL
         )
-        guard let result = try JSONSerialization.jsonObject(with: data) as? Dictionary<String, Any> else {
+        guard
+            let result: Dictionary<String, Any> = try JSONSerialization.jsonObject(with: data)
+                as? Dictionary<String, Any>
+        else {
             throw RecordingError.invalidResultSummary
         }
         return result
@@ -592,13 +595,13 @@ fileprivate struct SnapshotRecorder {
     /// - Parameter value: A decoded JSON dictionary, array, or scalar from test details.
     /// - Returns: Failure messages used to distinguish recording assertions from unexpected failures.
     private static func failureMessages(in value: Any) -> Array<String> {
-        if let dictionary = value as? Dictionary<String, Any> {
+        if let dictionary: Dictionary<String, Any> = value as? Dictionary<String, Any> {
             if dictionary["nodeType"] as? String == "Test Case Run", dictionary["result"] as? String == "Failed" {
                 return [dictionary["name"] as? String ?? "Unknown failure"]
             }
             return dictionary.values.flatMap { Self.failureMessages(in: $0) }
         }
-        if let array = value as? Array<Any> { return array.flatMap { Self.failureMessages(in: $0) } }
+        if let array: Array<Any> = value as? Array<Any> { return array.flatMap { Self.failureMessages(in: $0) } }
         return []
     }
 }
@@ -633,8 +636,8 @@ fileprivate struct SnapshotRecordingRunner {
         if arguments.showsHelp {
             ProcessRunner.reportProgress(Arguments.usage)
         } else {
-            let repositoryTarget = "RepositorySnapshotTests"
-            let comparisonTarget = "BuyMeACoffeeSnapshotTests"
+            let repositoryTarget: String = "RepositorySnapshotTests"
+            let comparisonTarget: String = "BuyMeACoffeeSnapshotTests"
             if arguments.filter == nil {
                 try SnapshotRecorder(
                     packageURL: packageURL,

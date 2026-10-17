@@ -133,7 +133,7 @@ fileprivate struct TestHost {
     fileprivate let testName: String
 
     /// File manager used to discover sources and write generated files.
-    private let manager = FileManager.default
+    private let manager: FileManager = .default
 
     /// Creates a generator for the selected test target in the package.
     ///
@@ -163,9 +163,9 @@ fileprivate struct TestHost {
     /// - Throws: `TestHostGenerationError` if inputs are invalid or the project cannot be generated.
     fileprivate func run() throws(TestHostGenerationError) {
         do {
-            let sources = try testSources()
-            let dependency = try resolvedDependency()
-            let project = try SnapshotProjectBuilder().build(
+            let sources: Array<URL> = try testSources()
+            let dependency: ResolvedDependency = try resolvedDependency()
+            let project: GeneratedProject = try SnapshotProjectBuilder().build(
                 root: packageDirectory,
                 sources: sources,
                 dependency: dependency,
@@ -191,10 +191,10 @@ fileprivate struct TestHost {
     /// - Throws: An error if the test directory cannot be read.
     private func testSources() throws -> Array<URL> {
         // Directory containing the original test sources.
-        let testDirectory = packageDirectory.appendingPathComponent("Tests/\(self.testName)")
+        let testDirectory: URL = packageDirectory.appendingPathComponent("Tests/\(self.testName)")
 
         // Immediate Swift source files, sorted by path to make project generation deterministic.
-        let sources = try manager.contentsOfDirectory(at: testDirectory, includingPropertiesForKeys: nil)
+        let sources: Array<URL> = try manager.contentsOfDirectory(at: testDirectory, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "swift" }
             .sorted { $0.path < $1.path }
 
@@ -207,15 +207,19 @@ fileprivate struct TestHost {
     /// - Throws: File or JSON errors, or a diagnostic if the lockfile lacks the required pin.
     private func resolvedDependency() throws -> ResolvedDependency {
         // Resolved package dependency data used to select the existing SnapshotTesting revision.
-        let lockData = try Data(contentsOf: packageDirectory.appendingPathComponent("Package.resolved"))
+        let lockData: Data = try .init(contentsOf: packageDirectory.appendingPathComponent("Package.resolved"))
 
         // Read the repository URL and commit from the lockfile instead of maintaining a second dependency version.
-        guard let lock = try JSONSerialization.jsonObject(with: lockData) as? Dictionary<String, Any>,
-            let pins = lock["pins"] as? Array<Dictionary<String, Any>>,
-            let pin = pins.first(where: { $0["identity"] as? String == "swift-snapshot-testing" }),
-            let location = pin["location"] as? String,
-            let state = pin["state"] as? Dictionary<String, Any>,
-            let revision = state["revision"] as? String
+        guard
+            let lock: Dictionary<String, Any> = try JSONSerialization.jsonObject(with: lockData)
+                as? Dictionary<String, Any>,
+            let pins: Array<Dictionary<String, Any>> = lock["pins"] as? Array<Dictionary<String, Any>>,
+            let pin: Dictionary<String, Any> = pins.first(where: {
+                $0["identity"] as? String == "swift-snapshot-testing"
+            }),
+            let location: String = pin["location"] as? String,
+            let state: Dictionary<String, Any> = pin["state"] as? Dictionary<String, Any>,
+            let revision: String = state["revision"] as? String
         else {
             throw TestHostGenerationError.missingDependency
         }
@@ -247,13 +251,13 @@ fileprivate struct TestHost {
     /// - Returns: UTF-8 XML describing the shared scheme.
     private func comparisonScheme(for project: GeneratedProject) -> Data {
         // Scheme buildable reference identifying the host application target.
-        let appRef = reference(project.applicationID, "TestHost", "TestHost.app")
+        let appRef: String = reference(project.applicationID, "TestHost", "TestHost.app")
 
         // Scheme buildable reference identifying the selected test target.
-        let testRef = reference(project.testsID, self.testName, "\(self.testName).xctest")
+        let testRef: String = reference(project.testsID, self.testName, "\(self.testName).xctest")
 
         // Shared comparison-only scheme; the recorder enables recording in disposable test-run configurations.
-        let scheme = """
+        let scheme: String = """
             <?xml version="1.0" encoding="UTF-8"?>
             <Scheme version="1.3">
             <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES"><BuildActionEntries>
@@ -309,7 +313,7 @@ fileprivate final class SnapshotProjectBuilder {
     private var objects: Dictionary<String, Any> = [:]
 
     /// Counter used to assign stable identifiers when objects are created in the same order.
-    private var nextID = 0
+    private var nextID: Int = 0
 
     /// Creates an empty project builder with its identifier counter starting at zero.
     ///
@@ -324,7 +328,7 @@ fileprivate final class SnapshotProjectBuilder {
     /// - Returns: A unique, 24-digit hexadecimal project identifier.
     private func object(_ isa: String, _ values: Dictionary<String, Any>) -> String {
         nextID += 1
-        let id = String(format: "%024X", nextID)
+        let id: String = .init(format: "%024X", nextID)
         objects[id] = values.merging(["isa": isa]) { _, new in new }
         return id
     }
@@ -334,7 +338,7 @@ fileprivate final class SnapshotProjectBuilder {
     /// - Parameter settings: Build settings applied to both configurations.
     /// - Returns: The identifier of a configuration list whose default is Debug.
     private func configurations(_ settings: Dictionary<String, Any>) -> String {
-        let configs = ["Debug", "Release"].map {
+        let configs: Array<String> = ["Debug", "Release"].map {
             object(
                 "XCBuildConfiguration",
                 ["name": $0, "buildSettings": settings]
@@ -407,7 +411,7 @@ fileprivate final class SnapshotProjectBuilder {
         testName: String
     ) throws -> GeneratedProject {
         // Project reference to the generated SwiftUI host application source.
-        let appSource = object(
+        let appSource: String = object(
             "PBXFileReference",
             [
                 "path": "TestHostApp.swift",
@@ -417,7 +421,7 @@ fileprivate final class SnapshotProjectBuilder {
         )
 
         // Absolute references to original test files, preserving their snapshot reference locations.
-        let testSources = sources.map {
+        let testSources: Array<String> = sources.map {
             object(
                 "PBXFileReference",
                 [
@@ -429,7 +433,7 @@ fileprivate final class SnapshotProjectBuilder {
         }
 
         // Build-product reference for the host application bundle.
-        let appProduct = object(
+        let appProduct: String = object(
             "PBXFileReference",
             [
                 "path": "TestHost.app",
@@ -439,7 +443,7 @@ fileprivate final class SnapshotProjectBuilder {
         )
 
         // Build-product reference for the hosted test bundle.
-        let testProduct = object(
+        let testProduct: String = object(
             "PBXFileReference",
             [
                 "path": "\(testName).xctest",
@@ -449,7 +453,7 @@ fileprivate final class SnapshotProjectBuilder {
         )
 
         // Project navigator group containing the generated build products.
-        let products = object(
+        let products: String = object(
             "PBXGroup",
             [
                 "name": "Products",
@@ -459,7 +463,7 @@ fileprivate final class SnapshotProjectBuilder {
         )
 
         // Root navigator group containing application source, test sources, and products.
-        let group = object(
+        let group: String = object(
             "PBXGroup",
             [
                 "sourceTree": "<group>",
@@ -468,10 +472,10 @@ fileprivate final class SnapshotProjectBuilder {
         )
 
         // Local package reference pointing to the repository being tested.
-        let package = object("XCLocalSwiftPackageReference", ["relativePath": root.path])
+        let package: String = object("XCLocalSwiftPackageReference", ["relativePath": root.path])
 
         // Remote dependency pinned to the same SnapshotTesting commit as the package lockfile.
-        let snapshotPackage = object(
+        let snapshotPackage: String = object(
             "XCRemoteSwiftPackageReference",
             [
                 "repositoryURL": dependency.location,
@@ -483,7 +487,7 @@ fileprivate final class SnapshotProjectBuilder {
         )
 
         // Package product references linked into the hosted test target.
-        let dependencies = [
+        let dependencies: Array<String> = [
             (package, "BuyMeACoffee"),
             (package, "BuyMeACoffeeSnapshotTesting"),
             (snapshotPackage, "SnapshotTesting")
@@ -492,7 +496,7 @@ fileprivate final class SnapshotProjectBuilder {
         }
 
         // Native application target providing the window required for glass snapshots.
-        let app = object(
+        let app: String = object(
             "PBXNativeTarget",
             [
                 "name": "TestHost",
@@ -515,7 +519,7 @@ fileprivate final class SnapshotProjectBuilder {
         )
 
         // Native test target that loads into the host application and compiles the original test sources.
-        let tests = object(
+        let tests: String = object(
             "PBXNativeTarget",
             [
                 "name": testName,
@@ -543,7 +547,7 @@ fileprivate final class SnapshotProjectBuilder {
         )
 
         // Root project object connecting targets, package dependencies, groups, and build settings.
-        let projectID = object(
+        let projectID: String = object(
             "PBXProject",
             [
                 "buildConfigurationList": configurations(common),
@@ -561,7 +565,7 @@ fileprivate final class SnapshotProjectBuilder {
         )
 
         // Xcode expects string values for project format versions, even in an XML property list.
-        let data = try PropertyListSerialization.data(
+        let data: Data = try PropertyListSerialization.data(
             fromPropertyList: [
                 "archiveVersion": "1",
                 "objectVersion": "56",

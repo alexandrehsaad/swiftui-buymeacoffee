@@ -51,7 +51,7 @@ extension SnapshotTestable {
             .environment(\.colorScheme, colorScheme)
             .environment(\.locale, .en)
 
-        let controller = UIHostingController(rootView: view)
+        let controller: UIHostingController<some View> = .init(rootView: view)
         controller.safeAreaRegions = []
 
         if backgroundColor == .clear {
@@ -75,7 +75,7 @@ extension SnapshotTestable {
         snapshotStrategy.diffing.diffV2 = { reference, captured in
             // Compare the PNG representation stored by the recorder. Comparing a live extended-range image with a
             // decoded reference produces false CI failures.
-            guard let png = captured.pngData() else {
+            guard let png: Data = captured.pngData() else {
                 return ("Could not encode the captured snapshot as PNG.", [])
             }
             return imageDiffing.diffV2(reference, imageDiffing.fromData(png))

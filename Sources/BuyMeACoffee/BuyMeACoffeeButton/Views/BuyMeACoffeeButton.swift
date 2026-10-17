@@ -26,7 +26,7 @@ public struct BuyMeACoffeeButton {
 
     /// The observational action performed with the destination URL before requesting that the system open it.
     @Environment(\._buyMeACoffeeButtonOpenAction)
-    private var openAction
+    private var openAction: @MainActor (URL) -> Void
 
     /// The locale used to resolve the button’s accessible wording.
     @Environment(\.locale)

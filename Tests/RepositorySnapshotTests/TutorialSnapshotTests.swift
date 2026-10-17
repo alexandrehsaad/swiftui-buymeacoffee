@@ -360,7 +360,7 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
         guard #available(iOS 26, *) else { return }
 
         assertScreenshot {
-            @Environment(\.colorScheme) var colorScheme
+            @Environment(\.colorScheme) var colorScheme: ColorScheme
             let tints: Array<BuyMeACoffeeTint> = [.black, .white, .yellow]
 
             VStack {
@@ -368,7 +368,7 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
                     BuyMeACoffeeButton(username: "")
                         .buttonStyle(.buyMeACoffee(tint: tint))
                         .overlay {
-                            if let borderColor = tint.borderColor(colorScheme: colorScheme) {
+                            if let borderColor: Color = tint.borderColor(colorScheme: colorScheme) {
                                 Capsule()
                                     .stroke(borderColor, lineWidth: 1)
                             }

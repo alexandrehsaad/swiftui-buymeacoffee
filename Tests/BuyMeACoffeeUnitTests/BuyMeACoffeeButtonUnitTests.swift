@@ -24,7 +24,7 @@ internal struct BuyMeACoffeeButtonUnitTests {
     @Test("Opens the Buy Me a Coffee account URL")
     internal func opensAccountURL() {
         var receivedURL: URL?
-        let button = BuyMeACoffeeButton(username: "myusername")
+        let button: BuyMeACoffeeButton = .init(username: "myusername")
 
         button.open { url in
             receivedURL = url
@@ -36,7 +36,7 @@ internal struct BuyMeACoffeeButtonUnitTests {
 
     @Test("Localizes the accessibility label in English")
     internal func localizesAccessibilityLabelInEnglish() {
-        let accessibilityLabel = BuyMeACoffeeLabel.coffee.text.localizedString(locale: .en)
+        let accessibilityLabel: String = BuyMeACoffeeLabel.coffee.text.localizedString(locale: .en)
 
         #expect(accessibilityLabel == "Buy me a coffee")
     }
