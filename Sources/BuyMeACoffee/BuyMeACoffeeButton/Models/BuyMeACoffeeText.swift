@@ -18,7 +18,11 @@ internal enum BuyMeACoffeeText: String {
     /// - Parameter locale: The language and region used to localize the wording.
     /// - Returns: The localized string, supported on iOS 15 and later.
     internal func localizedString(locale: Locale) -> String {
-        return String(localized: .init(self.rawValue), bundle: .module, locale: locale)
+        return .init(
+            localized: .init(self.rawValue),
+            bundle: .module,
+            locale: locale
+        )
     }
 }
 

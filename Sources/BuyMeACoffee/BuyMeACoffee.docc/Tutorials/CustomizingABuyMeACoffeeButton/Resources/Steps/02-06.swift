@@ -5,7 +5,6 @@ import SwiftUI
     VStack {
         BuyMeACoffeeButton(username: "yourusername")
             .buttonStyle(.glass)
-
         BuyMeACoffeeButton(username: "yourusername")
             .buttonStyle(.glassProminent)
     }

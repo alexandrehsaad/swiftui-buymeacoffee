@@ -18,7 +18,6 @@ import SwiftUI
                             BuyMeACoffeeButton(username: "myusername")
                                 .buttonStyle(.glassProminent)
                                 .tint(.blue)
-
                             BuyMeACoffeeButton(username: "myusername")
                                 .buttonStyle(.buyMeACoffeeGlass(tint: .black))
                                 .opacity(0.3)
@@ -28,7 +27,10 @@ import SwiftUI
                 }
             }
         }
-        .scaleEffect(x: 0.8, y: 0.8)
+        .scaleEffect(
+            x: 0.8,
+            y: 0.8
+        )
         .frame(maxWidth: .infinity)
         .padding(.horizontal)
     }

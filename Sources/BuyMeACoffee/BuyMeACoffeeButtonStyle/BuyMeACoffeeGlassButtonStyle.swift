@@ -12,28 +12,22 @@ import SwiftUI
 @available(iOS 26, *)
 public struct BuyMeACoffeeGlassButtonStyle {
     /// Whether the system preference to reduce motion is enabled.
-    @Environment(\.accessibilityReduceMotion)
-    private var accessibilityReduceMotion: Bool
+    @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion: Bool
 
     /// The preferred sizing behavior of the button.
-    @Environment(\.buttonSizing)
-    private var buttonSizing: ButtonSizing
+    @Environment(\.buttonSizing) private var buttonSizing: ButtonSizing
 
     /// The size applied to the button.
-    @Environment(\.controlSize)
-    private var controlSize: ControlSize
+    @Environment(\.controlSize) private var controlSize: ControlSize
 
     /// The current Dynamic Type size used to adjust the button's label.
-    @Environment(\.dynamicTypeSize)
-    private var dynamicTypeSize: DynamicTypeSize
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize: DynamicTypeSize
 
     /// Whether the button is enabled for user interaction.
-    @Environment(\.isEnabled)
-    private var isEnabled: Bool
+    @Environment(\.isEnabled) private var isEnabled: Bool
 
     /// The optional pressed-state override for internal testing.
-    @Environment(\._buyMeACoffeeButtonPressedStateOverride)
-    private var pressedStateOverride: Bool?
+    @Environment(\._buyMeACoffeeButtonPressedStateOverride) private var pressedStateOverride: Bool?
 
     /// The button's tint.
     private let tint: BuyMeACoffeeTint
@@ -53,7 +47,6 @@ public struct BuyMeACoffeeGlassButtonStyle {
 extension BuyMeACoffeeGlassButtonStyle: ButtonStyle {
     public func makeBody(configuration: Self.Configuration) -> some View {
         let isPressed: Bool = self.pressedStateOverride ?? configuration.isPressed
-
         return configuration.label
             .environment(\.buyMeACoffeeImageOffset, self.dynamicTypeSize.imageOffset)
             .environment(\.buyMeACoffeeLabelHorizontalPadding, self.dynamicTypeSize.labelHorizontalPadding)
@@ -64,15 +57,15 @@ extension BuyMeACoffeeGlassButtonStyle: ButtonStyle {
             .padding(.horizontal, self.controlSize.padding.horizontal)
             .padding(.vertical, self.controlSize.padding.vertical)
             .frame(maxWidth: self.buttonSizing == .flexible ? .infinity : nil)
-            .opacity(isPressed ? 0.75 : 1)
+            .opacity(isPressed == true ? 0.75 : 1)
             .glassEffect(
                 .regular
-                    .tint(self.isEnabled ? self.tint.backgroundColor : Color.primary.opacity(0.08))
+                    .tint(self.isEnabled == true ? self.tint.backgroundColor : Color.primary.opacity(0.08))
                     .interactive(),
                 in: .buttonBorder
             )
             .animation(
-                self.accessibilityReduceMotion ? nil : Animation.default,
+                self.accessibilityReduceMotion == true ? nil : Animation.default,
                 value: isPressed
             )
             .allowsHitTesting(self.isEnabled)

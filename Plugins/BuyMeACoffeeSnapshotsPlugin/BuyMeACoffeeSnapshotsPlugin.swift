@@ -11,7 +11,9 @@ import PackagePlugin
 
 /// Re-records the snapshot references through the standalone recording script.
 @main
-internal struct BuyMeACoffeeSnapshotsPlugin {}
+internal struct BuyMeACoffeeSnapshotsPlugin {
+    internal init() {}
+}
 
 // MARK: - CommandPlugin
 
@@ -28,7 +30,6 @@ extension BuyMeACoffeeSnapshotsPlugin: CommandPlugin {
     ) async throws {
         var extractor: ArgumentExtractor = .init(arguments)
         _ = extractor.extractOption(named: "target")
-
         let packageURL: URL = context.package.directoryURL
         let process: Process = .init()
         process.executableURL = .init(fileURLWithPath: "/usr/bin/xcrun")
@@ -38,7 +39,6 @@ extension BuyMeACoffeeSnapshotsPlugin: CommandPlugin {
                 packageURL.appendingPathComponent("Scripts/RecordSnapshots.swift").path
             ] + extractor.remainingArguments
         process.currentDirectoryURL = packageURL
-
         try process.run()
         process.waitUntilExit()
 

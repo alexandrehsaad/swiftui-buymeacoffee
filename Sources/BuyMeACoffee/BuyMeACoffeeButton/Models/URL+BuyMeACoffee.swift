@@ -17,6 +17,7 @@ extension URL {
         guard let url: Self = .init(string: "https://www.buymeacoffee.com/\(username)") else {
             preconditionFailure("Could not construct the Buy Me a Coffee account URL.")
         }
+
         return url
     }
 }

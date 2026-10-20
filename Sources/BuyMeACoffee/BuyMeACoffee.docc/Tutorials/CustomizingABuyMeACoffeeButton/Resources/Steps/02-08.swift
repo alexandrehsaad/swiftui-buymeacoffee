@@ -6,7 +6,6 @@ import SwiftUI
         BuyMeACoffeeButton(username: "yourusername")
             .buttonStyle(.glass)
             .foregroundStyle(.black, .yellow)
-
         BuyMeACoffeeButton(username: "yourusername")
             .buttonStyle(.glassProminent)
             .foregroundStyle(.black, .white)

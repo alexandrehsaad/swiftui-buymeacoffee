@@ -25,16 +25,13 @@ public struct BuyMeACoffeeButton {
     }
 
     /// The observational action performed with the destination URL before requesting that the system open it.
-    @Environment(\._buyMeACoffeeButtonOpenAction)
-    private var openAction: @MainActor (URL) -> Void
+    @Environment(\._buyMeACoffeeButtonOpenAction) private var openAction: @MainActor (URL) -> Void
 
     /// The locale used to resolve the button’s accessible wording.
-    @Environment(\.locale)
-    private var locale: Locale
+    @Environment(\.locale) private var locale: Locale
 
     /// A multiplier that scales the icon width relative to the title text style.
-    @ScaledMetric(relativeTo: .title3)
-    private var scale: CGFloat = 1
+    @ScaledMetric(relativeTo: .title3) private var scale: CGFloat = 1
 
     /// The creator's Buy Me a Coffee page URL.
     private let url: URL

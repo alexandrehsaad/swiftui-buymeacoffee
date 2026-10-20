@@ -21,7 +21,7 @@ extension View {
         @ViewBuilder content: (Self) -> Content
     ) -> some View
     where Content: View {
-        if condition {
+        if condition == true {
             content(self)
         } else {
             self

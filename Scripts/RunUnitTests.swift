@@ -71,7 +71,7 @@ fileprivate struct Arguments {
     /// - Parameter arguments: Arguments following the script name.
     /// - Throws: `UnitTestRunnerError.invalidArguments` if any options are supplied.
     fileprivate init(_ arguments: Array<String>) throws(UnitTestRunnerError) {
-        guard arguments.isEmpty else {
+        guard arguments.isEmpty == true else {
             throw UnitTestRunnerError.invalidArguments
         }
     }
@@ -94,7 +94,6 @@ fileprivate struct UnitTestRunner {
     /// - Throws: `UnitTestRunnerError` if a subprocess cannot start or complete successfully.
     fileprivate func run() throws(UnitTestRunnerError) {
         try self.runXcrun(arguments: ["swift", "Scripts/GenerateTestHost.swift", "--unit-tests"])
-
         try self.runXcrun(arguments: [
             "xcodebuild", "test",
             "-project", ".build/tests/Host/TestHost.xcodeproj",
@@ -106,7 +105,6 @@ fileprivate struct UnitTestRunner {
             "-enableCodeCoverage", "YES",
             "CODE_SIGNING_ALLOWED=NO"
         ])
-
         try self.runXcrun(arguments: ["swift", "Scripts/CollectCodeCoverage.swift", "--collect", "UnitTests"])
     }
 
@@ -131,6 +129,7 @@ fileprivate struct UnitTestRunner {
         guard process.terminationReason == .exit else {
             throw UnitTestRunnerError.commandInterrupted(signal: process.terminationStatus)
         }
+
         guard process.terminationStatus == EXIT_SUCCESS else {
             throw UnitTestRunnerError.commandFailed(status: process.terminationStatus)
         }

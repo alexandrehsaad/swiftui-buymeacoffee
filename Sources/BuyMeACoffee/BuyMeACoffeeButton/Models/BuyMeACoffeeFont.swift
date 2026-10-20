@@ -46,10 +46,17 @@ internal struct BuyMeACoffeeFont {
     internal var font: Font? {
         switch self.content {
         case .text(fontName: .none):
-            return .system(.title3, design: .default)
+            return .system(
+                .title3,
+                design: .default
+            )
 
         case .text(fontName: .some(let name)):
-            return .custom(name, size: 28, relativeTo: .title3)
+            return .custom(
+                name,
+                size: 28,
+                relativeTo: .title3
+            )
 
         case .image:
             return nil
@@ -88,12 +95,21 @@ internal struct BuyMeACoffeeFont {
     ) throws {
         let bundle: Bundle = .module
 
-        guard let fileURL: URL = bundle.url(forResource: fileName, withExtension: fileExtension) else {
+        guard
+            let fileURL: URL = bundle.url(
+                forResource: fileName,
+                withExtension: fileExtension
+            )
+        else {
             throw URLError(.fileDoesNotExist)
         }
 
         var error: Unmanaged<CFError>?
-        CTFontManagerRegisterFontsForURL(fileURL as CFURL, .process, &error)
+        CTFontManagerRegisterFontsForURL(
+            fileURL as CFURL,
+            .process,
+            &error
+        )
 
         if let error {
             throw error.takeUnretainedValue()

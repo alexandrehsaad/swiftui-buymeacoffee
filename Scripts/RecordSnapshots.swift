@@ -145,36 +145,47 @@ fileprivate struct Arguments {
 
         var seen: Set<String> = []
         var index: Int = 0
+
         while index < arguments.count {
             let option: String = arguments[index]
-            guard index + 1 < arguments.count, seen.insert(option).inserted else {
+
+            guard index + 1 < arguments.count, seen.insert(option).inserted == true else {
                 throw RecordingError.invalidArguments(message: Self.usage)
             }
+
             let value: String = arguments[index + 1]
+
             switch option {
             case "--destination":
-                guard value.split(separator: ",").contains("platform=iOS Simulator") else {
+                guard value.split(separator: ",").contains("platform=iOS Simulator") == true else {
                     throw RecordingError.invalidArguments(message: "Only an iOS Simulator destination is supported.")
                 }
+
                 self.destination = value
             case "--filter":
-                let components: Array<Substring> = value.split(separator: "/", omittingEmptySubsequences: false)
-                guard (1 ... 2).contains(components.count),
+                let components: Array<Substring> = value.split(
+                    separator: "/",
+                    omittingEmptySubsequences: false
+                )
+
+                guard (1 ... 2).contains(components.count) == true,
                     components.allSatisfy({ component in
-                        !component.isEmpty
+                        return component.isEmpty == false
                             && component.allSatisfy({
-                                $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "_")
-                            })
-                    })
+                                return $0.isASCII == true && ($0.isLetter == true || $0.isNumber == true || $0 == "_")
+                            }) == true
+                    }) == true
                 else {
                     throw RecordingError.invalidArguments(
                         message: "Use a test function or SuiteName/testFunction, without parentheses."
                     )
                 }
+
                 self.filter = value
             default:
                 throw RecordingError.invalidArguments(message: "Unknown option: \(option)\n\(Self.usage)")
             }
+
             index += 2
         }
     }
@@ -217,30 +228,44 @@ fileprivate enum ProcessRunner {
         workingDirectoryURL: URL,
         logURL: URL
     ) throws -> Int32 {
-        FileManager.default.createFile(atPath: logURL.path, contents: nil)
+        FileManager.default.createFile(
+            atPath: logURL.path,
+            contents: nil
+        )
         let output: FileHandle = try .init(forWritingTo: logURL)
-        defer { try? output.close() }
 
-        let process: Process = Self.process(arguments: arguments, workingDirectoryURL: workingDirectoryURL)
+        defer {
+            try? output.close()
+        }
+
+        let process: Process = Self.process(
+            arguments: arguments,
+            workingDirectoryURL: workingDirectoryURL
+        )
         process.standardOutput = output
         process.standardError = output
         ProcessRunner.reportProgress("Log: \(logURL.path)")
         let started: Date = .init()
         try process.run()
         var nextUpdate: Int = 10
-        while process.isRunning {
+
+        while process.isRunning == true {
             Thread.sleep(forTimeInterval: 0.25)
             let elapsed: Int = Int(Date().timeIntervalSince(started))
+
             if elapsed >= nextUpdate {
                 let operation: String = logURL.deletingPathExtension().lastPathComponent
                 ProcessRunner.reportProgress("Still running \(operation)… \(elapsed)s elapsed")
                 nextUpdate = elapsed + 10
             }
         }
+
         process.waitUntilExit()
+
         guard process.terminationReason == .exit else {
             throw RecordingError.commandInterrupted(logPath: logURL.path)
         }
+
         return process.terminationStatus
     }
 
@@ -256,15 +281,20 @@ fileprivate enum ProcessRunner {
         workingDirectoryURL: URL
     ) throws -> Data {
         let pipe: Pipe = .init()
-        let process: Process = Self.process(arguments: arguments, workingDirectoryURL: workingDirectoryURL)
+        let process: Process = Self.process(
+            arguments: arguments,
+            workingDirectoryURL: workingDirectoryURL
+        )
         process.standardOutput = pipe
         try process.run()
         // Drain the pipe before waiting so a full output buffer cannot block the child.
         let data: Data = pipe.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
+
         guard process.terminationReason == .exit && process.terminationStatus == 0 else {
             throw RecordingError.resultCommandFailed(status: process.terminationStatus)
         }
+
         return data
     }
 
@@ -327,30 +357,35 @@ fileprivate struct SnapshotRecorder {
             let workURL: URL = self.packageURL.appendingPathComponent(".build/snapshots")
             let buildURL: URL = workURL.appendingPathComponent("DerivedData")
             let runURL: URL = workURL.appendingPathComponent("Runs/\(UUID().uuidString)")
-            try manager.createDirectory(at: runURL, withIntermediateDirectories: true)
+            try manager.createDirectory(
+                at: runURL,
+                withIntermediateDirectories: true
+            )
             ProcessRunner.reportProgress("Snapshot target: \(self.testTargetName)")
             ProcessRunner.reportProgress("Snapshot destination: \(self.arguments.destination)")
             ProcessRunner.reportProgress("Logs and results: \(runURL.path)")
-
             ProcessRunner.reportProgress("Generating the iOS test host…")
             var generationArguments: Array<String> = [
                 "swift", self.packageURL.appendingPathComponent("Scripts/GenerateTestHost.swift").path
             ]
+
             if self.testTargetName == "RepositorySnapshotTests" {
                 generationArguments.append("--repository-snapshots")
             }
+
             let generationStatus: Int32 = try ProcessRunner.run(
                 arguments: generationArguments,
                 workingDirectoryURL: self.packageURL,
                 logURL: runURL.appendingPathComponent("generate.log")
             )
+
             guard generationStatus == 0 else {
                 throw RecordingError.hostGenerationFailed(logPath: runURL.appendingPathComponent("generate.log").path)
             }
 
             // The generated project can change its package-product references between runs. Reusing Xcode's
             // build description in that case leaves the products unresolved even though both packages exist.
-            if manager.fileExists(atPath: buildURL.path) {
+            if manager.fileExists(atPath: buildURL.path) == true {
                 try manager.removeItem(at: buildURL)
             }
 
@@ -370,11 +405,10 @@ fileprivate struct SnapshotRecorder {
                 workingDirectoryURL: self.packageURL,
                 logURL: buildLogURL
             )
+
             guard buildStatus == 0 else {
                 let log: String = (try? String(contentsOf: buildLogURL, encoding: .utf8)) ?? ""
-                let errors: Array<String> = log.components(separatedBy: .newlines).filter {
-                    $0.contains("error:")
-                }
+                let errors: Array<String> = log.components(separatedBy: .newlines).filter { $0.contains("error:") }
                 let detail: String = errors.suffix(4).joined(separator: "\n")
                 throw RecordingError.hostBuildFailed(
                     message: """
@@ -395,7 +429,7 @@ fileprivate struct SnapshotRecorder {
             let plans: Array<URL> = try manager.contentsOfDirectory(
                 at: productsURL,
                 includingPropertiesForKeys: [.contentModificationDateKey]
-            ).filter { $0.lastPathComponent.hasPrefix("TestHost_") && $0.pathExtension == "xctestrun" }
+            ).filter { $0.lastPathComponent.hasPrefix("TestHost_") == true && $0.pathExtension == "xctestrun" }
             // Cached builds can retain configurations for other architectures or SDK versions.
             let planURL: URL? = try plans.sorted {
                 let first: Date =
@@ -406,6 +440,7 @@ fileprivate struct SnapshotRecorder {
                     ?? .distantPast
                 return first > second
             }.first
+
             guard let planURL else {
                 throw RecordingError.missingTestPlan(logPath: buildLogURL.path)
             }
@@ -417,16 +452,28 @@ fileprivate struct SnapshotRecorder {
             let verificationPlanURL: URL = productsURL.appendingPathComponent(
                 "verify-\(runURL.lastPathComponent).xctestrun"
             )
+
             defer {
                 try? manager.removeItem(at: recordingPlanURL)
                 try? manager.removeItem(at: verificationPlanURL)
             }
-            try self.writePlan(sourceURL: planURL, destinationURL: recordingPlanURL, record: "all")
-            try self.writePlan(sourceURL: planURL, destinationURL: verificationPlanURL, record: "never")
 
+            try self.writePlan(
+                sourceURL: planURL,
+                destinationURL: recordingPlanURL,
+                record: "all"
+            )
+            try self.writePlan(
+                sourceURL: planURL,
+                destinationURL: verificationPlanURL,
+                record: "never"
+            )
             ProcessRunner.reportProgress("Recording references… (recording assertions are expected to fail)")
             let recordResultURL: URL = runURL.appendingPathComponent("Record.xcresult")
-            let recordStatus: Int32 = try self.test(planURL: recordingPlanURL, resultURL: recordResultURL)
+            let recordStatus: Int32 = try self.test(
+                planURL: recordingPlanURL,
+                resultURL: recordResultURL
+            )
             let recordSummary: Dictionary<String, Any> = try self.result(
                 arguments: ["summary"],
                 resultURL: recordResultURL
@@ -436,6 +483,7 @@ fileprivate struct SnapshotRecorder {
             let failedTestCount: Int = recordSummary["failedTests"] as? Int ?? 0
             let passedTestCount: Int = recordSummary["passedTests"] as? Int ?? 0
             let testCount: Int = recordSummary["totalTestCount"] as? Int ?? 0
+
             // Recording assertions fail, but tests without snapshots can pass normally.
             // Require at least one recording test and inspect every failure below; exit 65 alone is insufficient.
             guard recordStatus == 65, failedTestCount > 0,
@@ -448,35 +496,43 @@ fileprivate struct SnapshotRecorder {
             // Recording intentionally fails assertions. Accept only recording issues, including every issue within a
             // test.
             var snapshotCount: Int = 0
+
             for failure in failures {
                 guard let identifier: String = failure["testIdentifierString"] as? String else {
                     throw RecordingError.unrecognizedTestFailure(path: recordResultURL.path)
                 }
+
                 let details: Dictionary<String, Any> = try self.result(
                     arguments: ["test-details", "--test-id", identifier],
                     resultURL: recordResultURL
                 )
                 let issues: Array<String> = Self.failureMessages(in: details)
-                guard !issues.isEmpty,
+
+                guard issues.isEmpty == false,
                     issues.allSatisfy({
-                        $0.hasPrefix("Issue recorded: Record mode is on. Automatically recorded snapshot:")
-                    })
+                        return $0.hasPrefix("Issue recorded: Record mode is on. Automatically recorded snapshot:")
+                    }) == true
                 else {
                     throw RecordingError.testFailure(
                         identifier: identifier,
                         path: recordResultURL.path
                     )
                 }
+
                 snapshotCount += issues.count
             }
 
             ProcessRunner.reportProgress("Verifying \(snapshotCount) recorded snapshots…")
             let verifyResultURL: URL = runURL.appendingPathComponent("Verify.xcresult")
-            let verifyStatus: Int32 = try self.test(planURL: verificationPlanURL, resultURL: verifyResultURL)
+            let verifyStatus: Int32 = try self.test(
+                planURL: verificationPlanURL,
+                resultURL: verifyResultURL
+            )
             let verifySummary: Dictionary<String, Any> = try self.result(
                 arguments: ["summary"],
                 resultURL: verifyResultURL
             )
+
             // A successful run selecting fewer tests must not count as complete verification.
             guard verifyStatus == 0, verifySummary["passedTests"] as? Int == testCount,
                 verifySummary["totalTestCount"] as? Int == testCount,
@@ -484,6 +540,7 @@ fileprivate struct SnapshotRecorder {
             else {
                 throw RecordingError.verificationFailed(path: verifyResultURL.path)
             }
+
             ProcessRunner.reportProgress(
                 "Recorded and verified \(snapshotCount) snapshots across \(testCount) test functions."
             )
@@ -506,9 +563,17 @@ fileprivate struct SnapshotRecorder {
     ///   - destinationURL: Disposable copy beside the build products, preserving relative paths.
     ///   - record: SnapshotTesting recording mode: `all` to replace images or `never` to compare.
     /// - Throws: Property-list or filesystem errors, or `RecordingError` unless exactly one target is found.
-    private func writePlan(sourceURL: URL, destinationURL: URL, record: String) throws {
-        let original: Any = try PropertyListSerialization.propertyList(from: Data(contentsOf: sourceURL), format: nil)
+    private func writePlan(
+        sourceURL: URL,
+        destinationURL: URL,
+        record: String
+    ) throws {
+        let original: Any = try PropertyListSerialization.propertyList(
+            from: Data(contentsOf: sourceURL),
+            format: nil
+        )
         var targetCount: Int = 0
+
         /// Recursively updates target environments across flat and nested test-run formats.
         ///
         /// Each target dictionary increments `targetCount`; unrelated property-list values are preserved.
@@ -525,17 +590,30 @@ fileprivate struct SnapshotRecorder {
                     targetCount += 1
                     return dictionary
                 }
+
                 return dictionary.mapValues { update($0) }
             }
+
             if let array: Array<Any> = value as? Array<Any> { return array.map { update($0) } }
+
             return value
         }
+
         let updated: Any = update(original)
+
         guard targetCount == 1 else {
             throw RecordingError.invalidTargetCount(count: targetCount)
         }
-        let data: Data = try PropertyListSerialization.data(fromPropertyList: updated, format: .xml, options: 0)
-        try data.write(to: destinationURL, options: .atomic)
+
+        let data: Data = try PropertyListSerialization.data(
+            fromPropertyList: updated,
+            format: .xml,
+            options: 0
+        )
+        try data.write(
+            to: destinationURL,
+            options: .atomic
+        )
     }
 
     /// Runs the previously built tests on the configured simulator with optional function filtering.
@@ -545,7 +623,10 @@ fileprivate struct SnapshotRecorder {
     ///   - resultURL: Destination for the result bundle; a sibling `.log` stores tool output.
     /// - Returns: Xcode's exit status for the caller to validate against the result bundle.
     /// - Throws: Log-file, launch, or process-interruption errors.
-    private func test(planURL: URL, resultURL: URL) throws -> Int32 {
+    private func test(
+        planURL: URL,
+        resultURL: URL
+    ) throws -> Int32 {
         var options: Array<String> = [
             "xcodebuild", "test-without-building",
             "-xctestrun", planURL.path,
@@ -553,12 +634,14 @@ fileprivate struct SnapshotRecorder {
             "-parallel-testing-enabled", "NO",
             "-resultBundlePath", resultURL.path
         ]
+
         if let filter: String = self.arguments.filter {
             let components: Array<Substring> = filter.split(separator: "/")
             let suite: Substring = components.count == 2 ? components[0] : "BuyMeACoffeeButtonSnapshotTests"
             let function: Substring = components[components.count - 1]
             options += ["-only-testing:\(self.testTargetName)/\(suite)/\(function)()"]
         }
+
         return try ProcessRunner.run(
             arguments: options,
             workingDirectoryURL: self.packageURL,
@@ -573,17 +656,22 @@ fileprivate struct SnapshotRecorder {
     ///   - resultURL: Completed result bundle to inspect.
     /// - Returns: The decoded JSON object containing the requested test results.
     /// - Throws: Tool execution or JSON decoding errors, or `RecordingError` for a non-object response.
-    private func result(arguments: Array<String>, resultURL: URL) throws -> Dictionary<String, Any> {
+    private func result(
+        arguments: Array<String>,
+        resultURL: URL
+    ) throws -> Dictionary<String, Any> {
         let data: Data = try ProcessRunner.output(
             arguments: ["xcresulttool", "get", "test-results"] + arguments + ["--path", resultURL.path],
             workingDirectoryURL: self.packageURL
         )
+
         guard
             let result: Dictionary<String, Any> = try JSONSerialization.jsonObject(with: data)
                 as? Dictionary<String, Any>
         else {
             throw RecordingError.invalidResultSummary
         }
+
         return result
     }
 
@@ -599,9 +687,12 @@ fileprivate struct SnapshotRecorder {
             if dictionary["nodeType"] as? String == "Test Case Run", dictionary["result"] as? String == "Failed" {
                 return [dictionary["name"] as? String ?? "Unknown failure"]
             }
+
             return dictionary.values.flatMap { Self.failureMessages(in: $0) }
         }
+
         if let array: Array<Any> = value as? Array<Any> { return array.flatMap { Self.failureMessages(in: $0) } }
+
         return []
     }
 }
@@ -633,11 +724,12 @@ fileprivate struct SnapshotRecordingRunner {
     ///
     /// - Throws: `RecordingError` if any selected target cannot be recorded and verified.
     fileprivate func run() throws(RecordingError) {
-        if arguments.showsHelp {
+        if arguments.showsHelp == true {
             ProcessRunner.reportProgress(Arguments.usage)
         } else {
             let repositoryTarget: String = "RepositorySnapshotTests"
             let comparisonTarget: String = "BuyMeACoffeeSnapshotTests"
+
             if arguments.filter == nil {
                 try SnapshotRecorder(
                     packageURL: packageURL,

@@ -115,7 +115,8 @@ fileprivate struct Arguments {
         guard arguments.count == 2 else {
             throw CodeCoverageCollectionError.invalidArguments
         }
-        if arguments[0] == "--collect", ["UnitTests", "SnapshotTests"].contains(arguments[1]) {
+
+        if arguments[0] == "--collect", ["UnitTests", "SnapshotTests"].contains(arguments[1]) == true {
             self.operation = .collect(suite: arguments[1])
         } else if arguments[0] == "--merge" {
             self.operation = .merge(directory: arguments[1])
@@ -251,7 +252,6 @@ fileprivate struct CodeCoverageCollector {
                 includingPropertiesForKeys: nil
             )?.allObjects as? Array<URL> ?? [])
             .filter { $0.pathExtension == "swift" }.sorted { $0.path < $1.path }
-
         // Stable path ordering makes equivalent source checkouts produce the same digest.
         var digest: SHA256 = .init()
 
@@ -277,7 +277,6 @@ fileprivate struct CodeCoverageCollector {
             ),
             sourceRoot: sourceRoot.path
         )
-
         let destination: URL = self.packageDirectory.appendingPathComponent(".build/coverage/\(suite)")
 
         guard self.manager.fileExists(atPath: destination.path) == false else {
@@ -296,7 +295,6 @@ fileprivate struct CodeCoverageCollector {
             at: build.appendingPathComponent("Products/Debug-iphonesimulator/BuyMeACoffee.o"),
             to: destination.appendingPathComponent("BuyMeACoffee.o")
         )
-
         try JSONEncoder().encode(manifest).write(to: destination.appendingPathComponent("manifest.json"))
     }
 
@@ -333,7 +331,7 @@ fileprivate struct CodeCoverageCollector {
 
             if let result: String = self.environment[variable] {
                 if result == "success" {
-                    guard exists else {
+                    guard exists == true else {
                         throw CodeCoverageCollectionError.missingArtifact(suite: suite)
                     }
 
@@ -353,7 +351,6 @@ fileprivate struct CodeCoverageCollector {
         let output: URL = root.appendingPathComponent("Combined")
 
         // Prevent stale exports from an earlier local merge appearing beside a new partial or unavailable report.
-
         guard self.manager.fileExists(atPath: output.path) == false else {
             throw CodeCoverageCollectionError.existingCombinedOutput
         }
@@ -362,12 +359,10 @@ fileprivate struct CodeCoverageCollector {
             at: output,
             withIntermediateDirectories: true
         )
-
         let title: String =
             available.count == 2
             ? "Complete coverage" : (available.isEmpty ? "Coverage unavailable" : "Partial coverage")
         let status: String = "## \(title)\n\n" + descriptions.joined(separator: "\n") + "\n\n"
-
         try status.write(
             to: output.appendingPathComponent("status.md"),
             atomically: true,
@@ -406,12 +401,10 @@ fileprivate struct CodeCoverageCollector {
                 + available.map { $0.appendingPathComponent("Coverage.profdata").path }
                 + ["-o", profile.path]
         )
-
         let data: Data = try self.run([
             "xcrun", "llvm-cov", "export", firstDirectory.appendingPathComponent("BuyMeACoffee.o").path,
             "-instr-profile=\(profile.path)", first.sourceRoot + "/BuyMeACoffee"
         ])
-
         try data.write(
             to: output.appendingPathComponent("code-coverage.json"),
             options: .atomic
@@ -430,9 +423,7 @@ fileprivate struct CodeCoverageCollector {
         process.arguments = arguments
         process.currentDirectoryURL = self.packageDirectory
         process.standardOutput = pipe
-
         try process.run()
-
         // Drain output before waiting so a large export cannot fill the pipe and block the child process.
         let data: Data = pipe.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
@@ -452,7 +443,6 @@ do throws(CodeCoverageCollectionError) {
     let collector: CodeCoverageCollector = .init(
         packageDirectory: URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     )
-
     try collector.run(arguments: arguments)
 } catch let error {
     FileHandle.standardError.write(Data("\(error)\n".utf8))

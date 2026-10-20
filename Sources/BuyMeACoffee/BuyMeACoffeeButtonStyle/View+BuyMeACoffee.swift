@@ -14,7 +14,7 @@ extension View {
     /// - Parameter font: The appearance used to render the button title.
     /// - Returns: A view that provides the title appearance to contained buttons.
     internal func buyMeACoffeeFont(_ font: BuyMeACoffeeFont) -> some View {
-        self.environment(\.buyMeACoffeeFont, font)
+        return self.environment(\.buyMeACoffeeFont, font)
     }
 
     /// Performs an action when a `BuyMeACoffeeButton` requests that its destination be opened.
@@ -37,6 +37,6 @@ extension View {
     public func onBuyMeACoffeeButtonOpen(
         perform action: @escaping @MainActor (URL) -> Void
     ) -> some View {
-        self.environment(\._buyMeACoffeeButtonOpenAction, action)
+        return self.environment(\._buyMeACoffeeButtonOpenAction, action)
     }
 }

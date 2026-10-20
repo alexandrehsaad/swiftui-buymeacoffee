@@ -4,7 +4,6 @@ import SwiftUI
 #Preview {
     @Previewable @Environment(\.colorScheme) var colorScheme: ColorScheme
     let tints: Array<BuyMeACoffeeTint> = [.black, .white, .yellow]
-
     VStack {
         ForEach(tints, id: \.self) { tint in
             BuyMeACoffeeButton(username: "")

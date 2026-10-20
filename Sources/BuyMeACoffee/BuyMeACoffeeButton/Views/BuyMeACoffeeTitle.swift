@@ -12,24 +12,19 @@ import SwiftUI
 @available(iOS 15, *)
 internal struct BuyMeACoffeeTitle {
     /// The title appearance inherited from `BuyMeACoffeeButtonStyle`.
-    @Environment(\.buyMeACoffeeFont)
-    private var font: BuyMeACoffeeFont
+    @Environment(\.buyMeACoffeeFont) private var font: BuyMeACoffeeFont
 
     /// Whether the title is enabled for user interaction.
-    @Environment(\.isEnabled)
-    private var isEnabled: Bool
+    @Environment(\.isEnabled) private var isEnabled: Bool
 
     /// The optional palette inherited from `BuyMeACoffeeButtonStyle`.
-    @Environment(\.buyMeACoffeeTint)
-    private var tint: BuyMeACoffeeTint?
+    @Environment(\.buyMeACoffeeTint) private var tint: BuyMeACoffeeTint?
 
     /// The horizontal scale inherited from a Buy Me a Coffee button style.
-    @Environment(\.buyMeACoffeeTitleScale)
-    private var titleScale: CGFloat
+    @Environment(\.buyMeACoffeeTitleScale) private var titleScale: CGFloat
 
     /// A multiplier that scales the optical adjustment relative to the title text style.
-    @ScaledMetric(relativeTo: .title3)
-    private var scale: CGFloat = 1
+    @ScaledMetric(relativeTo: .title3) private var scale: CGFloat = 1
 
     /// The localized wording represented by the title.
     private let text: BuyMeACoffeeText
@@ -77,5 +72,6 @@ extension BuyMeACoffeeTitle: View {
                     view.foregroundStyle(.tertiary)
                 }
             }
+        }
     }
 }

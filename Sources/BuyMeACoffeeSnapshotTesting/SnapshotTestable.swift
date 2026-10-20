@@ -50,7 +50,6 @@ extension SnapshotTestable {
             .background(backgroundColor ?? (colorScheme == .light ? .white : .black))
             .environment(\.colorScheme, colorScheme)
             .environment(\.locale, .en)
-
         let controller: UIHostingController<some View> = .init(rootView: view)
         controller.safeAreaRegions = []
 
@@ -78,9 +77,9 @@ extension SnapshotTestable {
             guard let png: Data = captured.pngData() else {
                 return ("Could not encode the captured snapshot as PNG.", [])
             }
+
             return imageDiffing.diffV2(reference, imageDiffing.fromData(png))
         }
-
         assertSnapshot(
             of: controller,
             as: snapshotStrategy,
@@ -127,7 +126,6 @@ extension SnapshotTestable {
         ) {
             content()
         }
-
         self.assertView(
             testName: testName,
             fileID: fileID,

@@ -12,8 +12,7 @@ import SwiftUI
 @available(iOS 26, *)
 internal struct ButtonSizingFrameMaxWidthInfinityModifier {
     /// The preferred sizing behavior of the button.
-    @Environment(\.buttonSizing)
-    private var buttonSizing: ButtonSizing
+    @Environment(\.buttonSizing) private var buttonSizing: ButtonSizing
 
     /// Creates a button sizing frame modifier.
     @available(iOS 26, *)
@@ -21,7 +20,7 @@ internal struct ButtonSizingFrameMaxWidthInfinityModifier {
 
     /// The maximum width for the preferred button sizing behavior.
     private var maxWidth: CGFloat? {
-        self.buttonSizing == .flexible ? .infinity : nil
+        return self.buttonSizing == .flexible ? .infinity : nil
     }
 }
 

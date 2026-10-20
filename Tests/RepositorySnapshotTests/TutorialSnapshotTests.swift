@@ -21,16 +21,20 @@ import UIKit
 )
 @MainActor
 internal struct TutorialSnapshotTests: SnapshotTestable {
+    internal init() {}
+
     @Test("Make tutorial chapter 1 banner")
     internal func makeTutorialChapter1Banner() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         func button(tint: BuyMeACoffeeTint) -> some View {
             BuyMeACoffeeButton(username: "")
                 .buttonStyle(.buyMeACoffeeGlass(tint: tint))
         }
 
-        assertView(colorScheme: .light) {
+        self.assertView(colorScheme: .light) {
             Grid {
                 GridRow {
                     button(tint: .purple)
@@ -65,7 +69,9 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 1 step 4 screenshot")
     internal func makeTutorialChapter1Section1Step4Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             BuyMeACoffeeButton(username: "yourusername")
@@ -74,7 +80,9 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 1 screenshot")
     internal func makeTutorialChapter1Section2Step1Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
@@ -86,13 +94,14 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 2 screenshot")
     internal func makeTutorialChapter1Section2Step2Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonStyle(.plain)
-
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonStyle(.borderless)
             }
@@ -101,16 +110,16 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 3 screenshot")
     internal func makeTutorialChapter1Section2Step3Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonStyle(.plain)
-
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonStyle(.borderless)
-
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonStyle(.bordered)
             }
@@ -119,19 +128,18 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 4 screenshot")
     internal func makeTutorialChapter1Section2Step4Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonStyle(.plain)
-
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonStyle(.borderless)
-
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonStyle(.bordered)
-
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonStyle(.borderedProminent)
             }
@@ -140,7 +148,9 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 5 screenshot")
     internal func makeTutorialChapter1Section2Step5Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
@@ -152,13 +162,14 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 6 screenshot")
     internal func makeTutorialChapter1Section2Step6Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonStyle(.glass)
-
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonStyle(.glassProminent)
             }
@@ -167,14 +178,15 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 7 screenshot")
     internal func makeTutorialChapter1Section2Step7Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonStyle(.glass)
                     .foregroundStyle(.black, .yellow)
-
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonStyle(.glassProminent)
                     .foregroundStyle(.black, .white)
@@ -184,14 +196,15 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 8 screenshot")
     internal func makeTutorialChapter1Section2Step8Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonStyle(.glass)
                     .foregroundStyle(.black, .yellow)
-
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonStyle(.glassProminent)
                     .foregroundStyle(.black, .white)
@@ -202,7 +215,9 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 9 screenshot")
     internal func makeTutorialChapter1Section2Step9Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
@@ -214,7 +229,9 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 10 screenshot")
     internal func makeTutorialChapter1Section2Step10Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
@@ -229,16 +246,16 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 11 screenshot")
     internal func makeTutorialChapter1Section2Step11Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonBorderShape(.roundedRectangle(radius: 6))
-
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonBorderShape(.roundedRectangle(radius: 18))
-
                 BuyMeACoffeeButton(username: "yourusername")
                     .buttonBorderShape(.capsule)
             }
@@ -248,16 +265,16 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 12 screenshot")
     internal func makeTutorialChapter1Section2Step12Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
                 BuyMeACoffeeButton(username: "yourusername")
                     .labelStyle(.iconOnly)
-
                 BuyMeACoffeeButton(username: "yourusername")
                     .labelStyle(.titleOnly)
-
                 BuyMeACoffeeButton(username: "yourusername")
                     .labelStyle(.titleAndIcon)
             }
@@ -267,11 +284,16 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 13 screenshot")
     internal func makeTutorialChapter1Section2Step13Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
-                ForEach(ControlSize.allCases, id: \.self) { size in
+                ForEach(
+                    ControlSize.allCases,
+                    id: \.self
+                ) { size in
                     BuyMeACoffeeButton(username: "yourusername")
                         .buttonStyle(.buyMeACoffee())
                         .controlSize(size)
@@ -282,11 +304,16 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 14 screenshot")
     internal func makeTutorialChapter1Section2Step14Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
-                ForEach([ButtonSizing.fitted, .flexible], id: \.self) { size in
+                ForEach(
+                    [ButtonSizing.fitted, .flexible],
+                    id: \.self
+                ) { size in
                     BuyMeACoffeeButton(username: "yourusername")
                         .buttonStyle(.buyMeACoffee())
                         .buttonSizing(size)
@@ -298,11 +325,16 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 15 screenshot")
     internal func makeTutorialChapter1Section2Step15Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
-                ForEach(DynamicTypeSize.allCases, id: \.self) { size in
+                ForEach(
+                    DynamicTypeSize.allCases,
+                    id: \.self
+                ) { size in
                     BuyMeACoffeeButton(username: "yourusername")
                         .buttonStyle(.buyMeACoffee())
                         .dynamicTypeSize(size)
@@ -313,11 +345,16 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 16 screenshot")
     internal func makeTutorialChapter1Section2Step16Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
-                ForEach(BuyMeACoffeeTint.allCases, id: \.self) { tint in
+                ForEach(
+                    BuyMeACoffeeTint.allCases,
+                    id: \.self
+                ) { tint in
                     BuyMeACoffeeButton(username: "yourusername")
                         .buttonStyle(.buyMeACoffee(tint: tint))
                 }
@@ -327,11 +364,16 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 2 step 17 screenshot")
     internal func makeTutorialChapter1Section2Step17Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             VStack {
-                ForEach(BuyMeACoffeeTint.allCases, id: \.self) { tint in
+                ForEach(
+                    BuyMeACoffeeTint.allCases,
+                    id: \.self
+                ) { tint in
                     BuyMeACoffeeButton(username: "yourusername")
                         .buttonStyle(.buyMeACoffeeGlass(tint: tint))
                 }
@@ -341,13 +383,17 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 3 step 1 screenshot")
     internal func makeTutorialChapter1Section3Step1Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             let tints: Array<BuyMeACoffeeTint> = [.black, .white, .yellow]
-
             VStack {
-                ForEach(tints, id: \.self) { tint in
+                ForEach(
+                    tints,
+                    id: \.self
+                ) { tint in
                     BuyMeACoffeeButton(username: "")
                         .buttonStyle(.buyMeACoffee(tint: tint, border: .automatic))
                 }
@@ -357,14 +403,18 @@ internal struct TutorialSnapshotTests: SnapshotTestable {
 
     @Test("Make tutorial chapter 1 section 3 step 2 screenshot")
     internal func makeTutorialChapter1Section3Step2Screenshot() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         assertScreenshot {
             @Environment(\.colorScheme) var colorScheme: ColorScheme
             let tints: Array<BuyMeACoffeeTint> = [.black, .white, .yellow]
-
             VStack {
-                ForEach(tints, id: \.self) { tint in
+                ForEach(
+                    tints,
+                    id: \.self
+                ) { tint in
                     BuyMeACoffeeButton(username: "")
                         .buttonStyle(.buyMeACoffee(tint: tint))
                         .overlay {
@@ -399,7 +449,7 @@ extension TutorialSnapshotTests {
         column: UInt = #column,
         @ViewBuilder content: () -> Content
     ) where Content: View {
-        assertView(
+        self.assertView(
             testName: testName,
             fileID: fileID,
             file: file,
@@ -408,7 +458,10 @@ extension TutorialSnapshotTests {
             colorScheme: .light
         ) {
             content()
-                .frame(width: 375, height: 812)
+                .frame(
+                    width: 375,
+                    height: 812
+                )
         }
     }
 }

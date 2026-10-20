@@ -21,16 +21,20 @@ import UIKit
 )
 @MainActor
 internal struct RepositorySnapshotTests: SnapshotTestable {
+    internal init() {}
+
     @Test("Make ReadMe banner")
     internal func makeReadMeBanner() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
         func button(tint: BuyMeACoffeeTint) -> some View {
             BuyMeACoffeeButton(username: "")
                 .buttonStyle(.buyMeACoffeeGlass(tint: tint))
         }
 
-        assertView(colorScheme: .light) {
+        self.assertView(colorScheme: .light) {
             Grid {
                 GridRow {
                     button(tint: .purple)
@@ -83,15 +87,23 @@ internal struct RepositorySnapshotTests: SnapshotTestable {
                 }
             }
             .padding()
-            .frame(width: 1_280, height: 680)
+            .frame(
+                width: 1_280,
+                height: 680
+            )
         }
     }
 
     @Test("Make ReadMe button")
     internal func makeReadMeButton() {
-        guard #available(iOS 26, *) else { return }
+        guard #available(iOS 26, *) else {
+            return
+        }
 
-        assertView(backgroundColor: .clear, colorScheme: .light) {
+        self.assertView(
+            backgroundColor: .clear,
+            colorScheme: .light
+        ) {
             BuyMeACoffeeButton(username: "")
                 .buttonStyle(.buyMeACoffeeGlass(tint: .yellow))
         }

@@ -71,7 +71,7 @@ fileprivate struct Arguments {
     /// - Parameter arguments: Arguments following the script name.
     /// - Throws: `SnapshotTestRunnerError.invalidArguments` if any options are supplied.
     fileprivate init(_ arguments: Array<String>) throws(SnapshotTestRunnerError) {
-        guard arguments.isEmpty else {
+        guard arguments.isEmpty == true else {
             throw SnapshotTestRunnerError.invalidArguments
         }
     }
@@ -94,7 +94,6 @@ fileprivate struct SnapshotTestRunner {
     /// - Throws: `SnapshotTestRunnerError` if a subprocess cannot start or complete successfully.
     fileprivate func run() throws(SnapshotTestRunnerError) {
         try self.runXcrun(arguments: ["swift", "Scripts/GenerateTestHost.swift"])
-
         try self.runXcrun(arguments: [
             "xcodebuild", "test",
             "-project", ".build/tests/Host/TestHost.xcodeproj",
@@ -106,7 +105,6 @@ fileprivate struct SnapshotTestRunner {
             "-enableCodeCoverage", "YES",
             "CODE_SIGNING_ALLOWED=NO"
         ])
-
         try self.runXcrun(arguments: ["swift", "Scripts/CollectCodeCoverage.swift", "--collect", "SnapshotTests"])
     }
 
@@ -131,6 +129,7 @@ fileprivate struct SnapshotTestRunner {
         guard process.terminationReason == .exit else {
             throw SnapshotTestRunnerError.commandInterrupted(signal: process.terminationStatus)
         }
+
         guard process.terminationStatus == EXIT_SUCCESS else {
             throw SnapshotTestRunnerError.commandFailed(status: process.terminationStatus)
         }

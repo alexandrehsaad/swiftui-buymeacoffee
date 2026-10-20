@@ -12,8 +12,7 @@ import SwiftUI
 @available(iOS 15, *)
 internal struct BuyMeACoffeeButtonLabel {
     /// The additional horizontal padding inherited from a Buy Me a Coffee button style.
-    @Environment(\.buyMeACoffeeLabelHorizontalPadding)
-    private var labelHorizontalPadding: CGFloat
+    @Environment(\.buyMeACoffeeLabelHorizontalPadding) private var labelHorizontalPadding: CGFloat
 
     /// The label displayed by the button.
     private let label: BuyMeACoffeeLabel

@@ -171,7 +171,10 @@ fileprivate struct TestHost {
                 dependency: dependency,
                 testName: self.testName
             )
-            try write(project.data, to: projectDirectory.appendingPathComponent("project.pbxproj"))
+            try write(
+                project.data,
+                to: projectDirectory.appendingPathComponent("project.pbxproj")
+            )
             try writeApplication()
             try write(
                 comparisonScheme(for: project),
@@ -192,12 +195,13 @@ fileprivate struct TestHost {
     private func testSources() throws -> Array<URL> {
         // Directory containing the original test sources.
         let testDirectory: URL = packageDirectory.appendingPathComponent("Tests/\(self.testName)")
-
         // Immediate Swift source files, sorted by path to make project generation deterministic.
-        let sources: Array<URL> = try manager.contentsOfDirectory(at: testDirectory, includingPropertiesForKeys: nil)
-            .filter { $0.pathExtension == "swift" }
-            .sorted { $0.path < $1.path }
-
+        let sources: Array<URL> = try manager.contentsOfDirectory(
+            at: testDirectory,
+            includingPropertiesForKeys: nil
+        )
+        .filter { $0.pathExtension == "swift" }
+        .sorted { $0.path < $1.path }
         return sources
     }
 
@@ -252,10 +256,8 @@ fileprivate struct TestHost {
     private func comparisonScheme(for project: GeneratedProject) -> Data {
         // Scheme buildable reference identifying the host application target.
         let appRef: String = reference(project.applicationID, "TestHost", "TestHost.app")
-
         // Scheme buildable reference identifying the selected test target.
         let testRef: String = reference(project.testsID, self.testName, "\(self.testName).xctest")
-
         // Shared comparison-only scheme; the recorder enables recording in disposable test-run configurations.
         let scheme: String = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -273,7 +275,6 @@ fileprivate struct TestHost {
             </TestAction>
             </Scheme>
             """
-
         return Data(scheme.utf8)
     }
 
@@ -285,7 +286,11 @@ fileprivate struct TestHost {
     ///   - name: Target name displayed by Xcode.
     ///   - product: Build-product filename, including its bundle extension.
     /// - Returns: An XML buildable reference for use in the scheme.
-    private func reference(_ id: String, _ name: String, _ product: String) -> String {
+    private func reference(
+        _ id: String,
+        _ name: String,
+        _ product: String
+    ) -> String {
         return "<BuildableReference BuildableIdentifier=\"primary\" BlueprintIdentifier=\"\(id)\""
             + " BuildableName=\"\(product)\" BlueprintName=\"\(name)\""
             + " ReferencedContainer=\"container:TestHost.xcodeproj\"/>"
@@ -297,9 +302,21 @@ fileprivate struct TestHost {
     ///   - data: Complete file contents to write atomically.
     ///   - url: Destination whose parent directories are created when necessary.
     /// - Throws: Directory creation or file-writing errors.
-    private func write(_ data: Data, to url: URL) throws {
-        try manager.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        if (try? Data(contentsOf: url)) != data { try data.write(to: url, options: .atomic) }
+    private func write(
+        _ data: Data,
+        to url: URL
+    ) throws {
+        try manager.createDirectory(
+            at: url.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+
+        if (try? Data(contentsOf: url)) != data {
+            try data.write(
+                to: url,
+                options: .atomic
+            )
+        }
     }
 }
 
@@ -326,9 +343,15 @@ fileprivate final class SnapshotProjectBuilder {
     ///   - isa: Xcode project object type, such as `PBXNativeTarget`.
     ///   - values: Fields for the object; the explicit type overrides any supplied `isa` field.
     /// - Returns: A unique, 24-digit hexadecimal project identifier.
-    private func object(_ isa: String, _ values: Dictionary<String, Any>) -> String {
+    private func object(
+        _ isa: String,
+        _ values: Dictionary<String, Any>
+    ) -> String {
         nextID += 1
-        let id: String = .init(format: "%024X", nextID)
+        let id: String = .init(
+            format: "%024X",
+            nextID
+        )
         objects[id] = values.merging(["isa": isa]) { _, new in new }
         return id
     }
@@ -359,7 +382,10 @@ fileprivate final class SnapshotProjectBuilder {
     ///   - isa: Build phase type, such as `PBXSourcesBuildPhase`.
     ///   - files: Build-file object identifiers included in the phase; defaults to an empty phase.
     /// - Returns: The new build phase identifier.
-    private func phase(_ isa: String, _ files: Array<String> = []) -> String {
+    private func phase(
+        _ isa: String,
+        _ files: Array<String> = []
+    ) -> String {
         return object(
             isa,
             [
@@ -419,7 +445,6 @@ fileprivate final class SnapshotProjectBuilder {
                 "lastKnownFileType": "sourcecode.swift"
             ]
         )
-
         // Absolute references to original test files, preserving their snapshot reference locations.
         let testSources: Array<String> = sources.map {
             object(
@@ -431,7 +456,6 @@ fileprivate final class SnapshotProjectBuilder {
                 ]
             )
         }
-
         // Build-product reference for the host application bundle.
         let appProduct: String = object(
             "PBXFileReference",
@@ -441,7 +465,6 @@ fileprivate final class SnapshotProjectBuilder {
                 "explicitFileType": "wrapper.application"
             ]
         )
-
         // Build-product reference for the hosted test bundle.
         let testProduct: String = object(
             "PBXFileReference",
@@ -451,7 +474,6 @@ fileprivate final class SnapshotProjectBuilder {
                 "explicitFileType": "wrapper.cfbundle"
             ]
         )
-
         // Project navigator group containing the generated build products.
         let products: String = object(
             "PBXGroup",
@@ -461,7 +483,6 @@ fileprivate final class SnapshotProjectBuilder {
                 "children": [appProduct, testProduct]
             ]
         )
-
         // Root navigator group containing application source, test sources, and products.
         let group: String = object(
             "PBXGroup",
@@ -470,10 +491,8 @@ fileprivate final class SnapshotProjectBuilder {
                 "children": [appSource] + testSources + [products]
             ]
         )
-
         // Local package reference pointing to the repository being tested.
         let package: String = object("XCLocalSwiftPackageReference", ["relativePath": root.path])
-
         // Remote dependency pinned to the same SnapshotTesting commit as the package lockfile.
         let snapshotPackage: String = object(
             "XCRemoteSwiftPackageReference",
@@ -485,7 +504,6 @@ fileprivate final class SnapshotProjectBuilder {
                 ]
             ]
         )
-
         // Package product references linked into the hosted test target.
         let dependencies: Array<String> = [
             (package, "BuyMeACoffee"),
@@ -494,7 +512,6 @@ fileprivate final class SnapshotProjectBuilder {
         ].map {
             object("XCSwiftPackageProductDependency", ["package": $0.0, "productName": $0.1])
         }
-
         // Native application target providing the window required for glass snapshots.
         let app: String = object(
             "PBXNativeTarget",
@@ -517,7 +534,6 @@ fileprivate final class SnapshotProjectBuilder {
                 "dependencies": []
             ]
         )
-
         // Native test target that loads into the host application and compiles the original test sources.
         let tests: String = object(
             "PBXNativeTarget",
@@ -545,7 +561,6 @@ fileprivate final class SnapshotProjectBuilder {
                 "packageProductDependencies": dependencies
             ]
         )
-
         // Root project object connecting targets, package dependencies, groups, and build settings.
         let projectID: String = object(
             "PBXProject",
@@ -563,7 +578,6 @@ fileprivate final class SnapshotProjectBuilder {
                 "attributes": ["TargetAttributes": [tests: ["TestTargetID": app]]]
             ]
         )
-
         // Xcode expects string values for project format versions, even in an XML property list.
         let data: Data = try PropertyListSerialization.data(
             fromPropertyList: [
@@ -576,7 +590,6 @@ fileprivate final class SnapshotProjectBuilder {
             format: .xml,
             options: 0
         )
-
         return GeneratedProject(
             data: data,
             applicationID: app,

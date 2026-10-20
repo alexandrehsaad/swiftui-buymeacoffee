@@ -14,10 +14,11 @@ import Testing
 @MainActor
 @Suite("BuyMeACoffeeButton Unit Tests")
 internal struct BuyMeACoffeeButtonUnitTests {
+    internal init() {}
+
     @Test("Creates a Buy Me a Coffee account URL")
     internal func createsAccountURL() {
         let url: URL = .buyMeACoffee(username: "myusername")
-
         #expect(url == URL(string: "https://www.buymeacoffee.com/myusername"))
     }
 
@@ -25,19 +26,16 @@ internal struct BuyMeACoffeeButtonUnitTests {
     internal func opensAccountURL() {
         var receivedURL: URL?
         let button: BuyMeACoffeeButton = .init(username: "myusername")
-
         button.open { url in
             receivedURL = url
             return .handled
         }
-
         #expect(receivedURL == URL(string: "https://www.buymeacoffee.com/myusername"))
     }
 
     @Test("Localizes the accessibility label in English")
     internal func localizesAccessibilityLabelInEnglish() {
         let accessibilityLabel: String = BuyMeACoffeeLabel.coffee.text.localizedString(locale: .en)
-
         #expect(accessibilityLabel == "Buy me a coffee")
     }
 

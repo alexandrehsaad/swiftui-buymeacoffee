@@ -12,20 +12,16 @@ import SwiftUI
 @available(iOS 15, *)
 internal struct BuyMeACoffeeImage {
     /// The horizontal offset inherited from a Buy Me a Coffee button style.
-    @Environment(\.buyMeACoffeeImageOffset)
-    private var imageOffset: CGFloat
+    @Environment(\.buyMeACoffeeImageOffset) private var imageOffset: CGFloat
 
     /// Whether the image is enabled for user interaction.
-    @Environment(\.isEnabled)
-    private var isEnabled: Bool
+    @Environment(\.isEnabled) private var isEnabled: Bool
 
     /// The optional palette inherited from `BuyMeACoffeeButtonStyle`.
-    @Environment(\.buyMeACoffeeTint)
-    private var tint: BuyMeACoffeeTint?
+    @Environment(\.buyMeACoffeeTint) private var tint: BuyMeACoffeeTint?
 
     /// A multiplier that scales the optical adjustment relative to the title text style.
-    @ScaledMetric(relativeTo: .title3)
-    private var scale: CGFloat = 1
+    @ScaledMetric(relativeTo: .title3) private var scale: CGFloat = 1
 
     /// The icon represented by this image.
     private let icon: BuyMeACoffeeIcon
@@ -56,7 +52,7 @@ extension BuyMeACoffeeImage: View {
             .frame(width: self.imageWidth)
             .offset(x: self.imageOffset)
             .ifLet(self.tint) { view, tint in
-                if self.isEnabled {
+                if self.isEnabled == true {
                     view.foregroundStyle(
                         tint.iconPrimaryColor,
                         tint.iconSecondaryColor

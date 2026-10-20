@@ -12,28 +12,22 @@ import SwiftUI
 @available(iOS 15, *)
 public struct BuyMeACoffeeButtonStyle {
     /// Whether the system preference to reduce motion is enabled.
-    @Environment(\.accessibilityReduceMotion)
-    private var accessibilityReduceMotion: Bool
+    @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion: Bool
 
     /// The current light or dark appearance.
-    @Environment(\.colorScheme)
-    private var colorScheme: ColorScheme
+    @Environment(\.colorScheme) private var colorScheme: ColorScheme
 
     /// The size applied to the button.
-    @Environment(\.controlSize)
-    private var controlSize: ControlSize
+    @Environment(\.controlSize) private var controlSize: ControlSize
 
     /// The current Dynamic Type size used to adjust the button's label.
-    @Environment(\.dynamicTypeSize)
-    private var dynamicTypeSize: DynamicTypeSize
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize: DynamicTypeSize
 
     /// Whether the button is enabled for user interaction.
-    @Environment(\.isEnabled)
-    private var isEnabled: Bool
+    @Environment(\.isEnabled) private var isEnabled: Bool
 
     /// The optional pressed-state override for internal testing.
-    @Environment(\._buyMeACoffeeButtonPressedStateOverride)
-    private var pressedStateOverride: Bool?
+    @Environment(\._buyMeACoffeeButtonPressedStateOverride) private var pressedStateOverride: Bool?
 
     /// The button's tint.
     private let tint: BuyMeACoffeeTint
@@ -58,7 +52,7 @@ public struct BuyMeACoffeeButtonStyle {
     /// The background displayed for the current enabled state.
     @ViewBuilder
     private var backgroundColor: some View {
-        self.isEnabled ? self.tint.backgroundColor : Color.secondary.opacity(0.25)
+        self.isEnabled == true ? self.tint.backgroundColor : Color.secondary.opacity(0.25)
     }
 
     /// The border displayed for the current border treatment and color scheme.
@@ -70,7 +64,10 @@ public struct BuyMeACoffeeButtonStyle {
                 colorScheme: self.colorScheme
             ) {
                 ButtonBorderShape.buttonBorder
-                    .strokeBorder(borderColor, lineWidth: 1)
+                    .strokeBorder(
+                        borderColor,
+                        lineWidth: 1
+                    )
             }
         }
     }
@@ -82,7 +79,6 @@ public struct BuyMeACoffeeButtonStyle {
 extension BuyMeACoffeeButtonStyle: ButtonStyle {
     public func makeBody(configuration: Self.Configuration) -> some View {
         let isPressed: Bool = self.pressedStateOverride ?? configuration.isPressed
-
         return configuration.label
             .environment(\.buyMeACoffeeImageOffset, self.dynamicTypeSize.imageOffset)
             .environment(\.buyMeACoffeeLabelHorizontalPadding, self.dynamicTypeSize.labelHorizontalPadding)
@@ -98,9 +94,9 @@ extension BuyMeACoffeeButtonStyle: ButtonStyle {
                 self.borderColor
             }
             .backportedClipShapeButtonBorder()
-            .opacity(isPressed ? 0.75 : 1)
+            .opacity(isPressed == true ? 0.75 : 1)
             .animation(
-                self.accessibilityReduceMotion ? nil : Animation.default.speed(2),
+                self.accessibilityReduceMotion == true ? nil : Animation.default.speed(2),
                 value: isPressed
             )
             .allowsHitTesting(self.isEnabled)
