@@ -227,9 +227,9 @@ APIs and the DocC catalog for concepts, tutorials, and guides.
 
 ### Coding Style
 
-Follow the [Coding Style](/Docs/CodingStyle.md) when changing source code, tests, documentation, or configuration files.
-It documents the Swift Format rules, project conventions, and formatting exceptions. See Workflows below for tool
-commands and continuous integration behavior.
+Follow the repository's formatter configuration and the conventions in surrounding code when changing source code,
+tests, documentation, or configuration files. See [Formatting](/Docs/Formatting.md) for tool commands and continuous
+integration behavior.
 
 ### Commits
 

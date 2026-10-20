@@ -77,7 +77,7 @@ BuyMeACoffeeButton(username: "myusername")
 
 The glass style requires iOS 26 or later. Use `buyMeACoffee(tint: .yellow)` on earlier versions.
 
-Use `onBuyMeACoffeeButtonOpen(perform:)` to log interactions or record an analytics event. The callback receives the destination 
+Use `onBuyMeACoffeeButtonOpen(perform:)` to log interactions or record an analytics event. The callback receives the destination
 URL before the system is asked to open it. It does not confirm that the page opened or that a donation was completed.
 
 The code above renders the button below. Click it to visit my Buy Me a Coffee page.
@@ -93,18 +93,19 @@ The code above renders the button below. Click it to visit my Buy Me a Coffee pa
 ## Documentation
 
 You can read more about this package by visiting the
-[documentation](https://alexandrehsaad.github.io/swiftui-buymeacoffee/documentation/buymeacoffee).
+[Documentation](https://alexandrehsaad.github.io/swiftui-buymeacoffee/documentation/buymeacoffee).
 
 ## Contributing
 
-Everyone is welcome to contribute to BuyMeACoffee. See the [Contributing](/CONTRIBUTING.md) guide to get started.
+Everyone is welcome to contribute to BuyMeACoffee. Please read our [Contributing Guide](/CONTRIBUTING.md) and
+[Code of Conduct](/CODE_OF_CONDUCT.md).
 
-If you find a bug, please create an [issue](https://github.com/alexandrehsaad/swiftui-buymeacoffee/issues). Security
-vulnerabilities should be reported using the instructions in the [Security Policy](/SECURITY.md).
+If you find a bug, please submit a
+[Bug Report](https://github.com/alexandrehsaad/swiftui-buymeacoffee/issues/new?template=bug-report.yml).
+If you would like to suggest a new capability or improvement, please submit a
+[Feature Request](https://github.com/alexandrehsaad/swiftui-buymeacoffee/issues/new?template=feature-request.yml).
 
-## Code of Conduct
-
-This project follows a [Code of Conduct](/CODE_OF_CONDUCT.md).
+Report security vulnerabilities using the instructions in the [Security Policy](/SECURITY.md).
 
 ## License
 
