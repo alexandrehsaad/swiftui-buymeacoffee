@@ -227,8 +227,9 @@ internal struct BuyMeACoffeeButtonSnapshotTests: SnapshotTestable {
                     }
                 }
                 GridRow {
-                    labelCells { BuyMeACoffeeButton(username: "")
-                        .buttonStyle(.glass)
+                    labelCells {
+                        BuyMeACoffeeButton(username: "")
+                            .buttonStyle(.glass)
                     }
                 }
                 GridRow {

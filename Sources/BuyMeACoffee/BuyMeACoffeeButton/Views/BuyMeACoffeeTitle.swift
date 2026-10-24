@@ -72,6 +72,5 @@ extension BuyMeACoffeeTitle: View {
                     view.foregroundStyle(.tertiary)
                 }
             }
-        }
     }
 }
