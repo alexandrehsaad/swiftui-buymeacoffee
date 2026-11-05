@@ -3,7 +3,7 @@
         Create a BuyMeACoffeeButton and customize its content, shape, tint, and button style.
     }
 
-    @Chapter(name: "Create and Style Your Button") {
+    @Chapter(name: "Creating and Styling a Buy Me a Coffee Button") {
         @Image(source: "makeTutorialChapter1Banner.light.png")
         @TutorialReference(tutorial: "doc:CustomizingABuyMeACoffeeButton")
     }
