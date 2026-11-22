@@ -18,9 +18,13 @@ for GitHub Actions; local generation does not require deployment permissions.
 ## Continuous Integration
 
 The [Documentation workflow](/.github/workflows/documentation.yml) runs on pushes to `main` and manual dispatch. Its
-`Deploy Documentation` job builds the site, configures GitHub Pages, uploads `.build/github-pages/`, and deploys that
-artifact. The deployment URL appears in the `github-pages` environment. A failed build prevents deployment. A newer
-Pages run cancels an older run in progress.
+`Build Documentation` job builds the site, configures GitHub Pages, and uploads `.build/github-pages/`. The dependent
+`Deploy Documentation` job publishes that artifact on `ubuntu-latest` after the build job succeeds. Separating upload
+and deployment avoids looking up the artifact immediately after upload in the same job.
+
+The deployment URL appears in the `github-pages` environment. A failed build or upload prevents deployment. A newer
+Pages run cancels an older run in progress. If deployment fails, rerun only the failed deployment job while its artifact
+is still available; this reuses the upload instead of creating another artifact with the same name.
 
 ## Build Script
 
